@@ -1,0 +1,2929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --paper: #f5f3ee;
+  --paper-dark: #ede9e1;
+  --paper-mid: #e8e4db;
+  --ink: #1a1814;
+  --ink-mid: #5a5650;
+  --ink-light: #9a9590;
+  --ink-faint: #ccc9c2;
+  --rule: #ddd9d0;
+  --white: #ffffff;
+  --red: #b03020;
+  --amber: #b07020;
+  --green: #306030;
+  --blue: #203070;
+  --purple: #603070;
+  --teal: #207060;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --shadow: 0 2px 12px rgba(26,24,20,0.10), 0 1px 3px rgba(26,24,20,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,24,20,0.16), 0 2px 8px rgba(26,24,20,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: var(--sans); 
+  background: var(--paper); 
+  color: var(--ink); 
+  height: 100vh; 
+  overflow: hidden; 
+  font-size: 13px; 
+}
+
+/* ── LOGIN SCREEN ─────────────────────────── */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: var(--paper);
+}
+#login-screen.hidden { display: none; }
+.login-box {
+  background: var(--white);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+  max-width: 360px;
+  width: 100%;
+}
+.login-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.login-subtitle {
+  font-size: 13px;
+  color: var(--ink-light);
+  margin-bottom: 24px;
+}
+.login-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  outline: none;
+  margin-bottom: 16px;
+}
+.login-input:focus { border-color: var(--ink-faint); }
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  cursor: pointer;
+}
+.login-btn:hover { opacity: 0.9; }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-message {
+  margin-top: 16px;
+  padding: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+.login-message.error { background: #fde8e8; color: var(--red); }
+.login-message.success { background: #e8f5e8; color: var(--green); }
+.login-footer {
+  margin-top: 24px;
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-align: center;
+}
+.login-divider {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin: 16px 0;
+}
+.login-btn-secondary {
+  background: var(--paper);
+  color: var(--ink-mid);
+  border: 1px solid var(--rule);
+}
+.login-btn-secondary:hover {
+  background: var(--paper-dark);
+  color: var(--ink);
+}
+#app.hidden { display: none; }
+
+/* ── APP SHELL ─────────────────────────────── */
+#app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SET TABS (left edge) ──────────────────── */
+#set-tabs {
+  width: 40px;
+  min-width: 40px;
+  background: #4a4844;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  gap: 2px;
+  z-index: 15;
+}
+
+.set-tab {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  padding: 14px 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35);
+  cursor: grab;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  border-left: 2px solid transparent;
+  white-space: nowrap;
+  user-select: none;
+}
+.set-tab:hover {
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.05);
+}
+.set-tab.active {
+  color: var(--paper);
+  background: #5a5854;
+  border-left-color: var(--teal);
+}
+.set-tab.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.set-tab.drag-over {
+  border-top: 2px solid var(--teal);
+}
+
+.set-tab-spacer { flex: 1; }
+
+.set-tab-add {
+  writing-mode: horizontal-tb;
+  transform: none;
+  text-align: center;
+  font-size: 16px;
+  padding: 10px;
+  color: rgba(255,255,255,0.25);
+  cursor: pointer;
+}
+.set-tab-add:hover { color: rgba(255,255,255,0.5); }
+
+/* ── SIDEBAR ───────────────────────────────── */
+#sidebar {
+  width: 260px; min-width: 260px;
+  background: #5a5854;
+  display: flex; flex-direction: column;
+  overflow: hidden; z-index: 10;
+  transition: width 0.2s, min-width 0.2s;
+}
+#sidebar.collapsed {
+  width: 0; min-width: 0;
+  overflow: hidden;
+}
+
+#sidebar-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-title { 
+  font-family: var(--mono); 
+  font-size: 12px; 
+  font-weight: 500; 
+  letter-spacing: 2.5px; 
+  text-transform: uppercase; 
+  color: var(--paper); 
+}
+.sidebar-sub { 
+  font-family: var(--mono); 
+  font-size: 9px; 
+  color: rgba(255,255,255,0.3); 
+  letter-spacing: 1px; 
+  text-transform: uppercase; 
+  margin-top: 2px; 
+}
+
+#sidebar-search {
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+#search-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--paper);
+  outline: none;
+}
+#search-input::placeholder { color: rgba(255,255,255,0.4); }
+#search-input:focus { 
+  background: rgba(255,255,255,0.12); 
+  border-color: rgba(255,255,255,0.25); 
+}
+
+#sidebar-actions {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.btn-new {
+  width: 100%; padding: 8px 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(255,255,255,0.7); cursor: pointer;
+  transition: all 0.15s; text-align: left;
+}
+.btn-new:hover { background: rgba(255,255,255,0.14); color: var(--paper); }
+
+/* Tag filters */
+#tag-filters {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.tag-filter-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tag-manage-link {
+  font-size: 8px;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tag-manage-link:hover {
+  color: rgba(255,255,255,0.6);
+}
+.tag-filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.tag-filter {
+  padding: 3px 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.tag-filter:hover { 
+  background: rgba(255,255,255,0.1); 
+  color: rgba(255,255,255,0.7); 
+}
+.tag-filter.active { 
+  background: rgba(255,255,255,0.15); 
+  border-color: rgba(255,255,255,0.25);
+  color: var(--paper); 
+}
+
+/* Item list */
+#item-list { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 6px 0; 
+}
+
+.list-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
+}
+.list-item:hover { background: rgba(255,255,255,0.05); }
+.list-item.active { 
+  background: rgba(255,255,255,0.09); 
+  border-left-color: var(--teal); 
+}
+
+.list-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--white);
+  flex-shrink: 0;
+}
+.list-avatar.square { border-radius: 4px; }
+.list-info { flex: 1; min-width: 0; }
+.list-name {
+  font-size: 12px; 
+  font-weight: 500; 
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.list-meta {
+  font-family: var(--mono); 
+  font-size: 9px;
+  color: rgba(255,255,255,0.35); 
+  letter-spacing: 0.3px; 
+  margin-top: 2px;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+}
+
+/* Stats footer */
+#sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.5px;
+}
+.cortex-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cortex-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.cortex-dot.disconnected { background: rgba(255,255,255,0.2); }
+.cortex-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── MAIN AREA ─────────────────────────────── */
+#main { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden; 
+  background: var(--white);
+}
+
+/* ── MAIN TOOLBAR ──────────────────────────── */
+#main-toolbar {
+  height: 48px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  background: var(--white);
+}
+
+.toolbar-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.toolbar-spacer { flex: 1; }
+
+.toolbar-btn {
+  padding: 6px 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--paper);
+  color: var(--ink-mid);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.toolbar-btn:hover { background: var(--paper-dark); color: var(--ink); }
+.toolbar-btn.active { 
+  background: var(--ink); 
+  color: var(--paper); 
+  border-color: var(--ink); 
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--rule);
+}
+.view-toggle-btn {
+  padding: 6px 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--paper);
+  color: var(--ink-light);
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.view-toggle-btn:first-child { border-right: 1px solid var(--rule); }
+.view-toggle-btn:hover { color: var(--ink); }
+.view-toggle-btn.active { 
+  background: var(--ink); 
+  color: var(--paper); 
+}
+
+/* ── EMPTY STATE ───────────────────────────── */
+#empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.empty-icon {
+  font-size: 32px;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+.empty-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--ink-faint);
+}
+.empty-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+/* ── DETAIL VIEW ───────────────────────────── */
+#detail-view {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#detail-view.visible { display: flex; }
+
+.detail-header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+.detail-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--white);
+  flex-shrink: 0;
+}
+.detail-avatar.square { border-radius: 6px; }
+.detail-title-block { flex: 1; }
+.detail-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  outline: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+}
+.detail-name:focus { border-bottom-color: var(--ink-faint); }
+.detail-subtitle {
+  font-size: 13px;
+  color: var(--ink-mid);
+  margin-top: 4px;
+}
+.detail-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-light);
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+.detail-btn {
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--paper);
+  color: var(--ink-mid);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.detail-btn:hover { background: var(--paper-dark); color: var(--ink); }
+.detail-btn.danger:hover { background: #fef2f2; color: var(--red); border-color: var(--red); }
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+/* Field groups */
+.field-group { margin-bottom: 28px; }
+.field-group-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-light);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.field-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+.field-label {
+  width: 90px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink-light);
+  padding-top: 7px;
+}
+.field-value {
+  flex: 1;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  outline: none;
+  min-width: 0;
+}
+.field-value:focus { border-color: var(--ink-faint); }
+.field-value::placeholder { color: var(--ink-faint); }
+textarea.field-value {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.field-with-timestamp {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-timestamp {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  padding-left: 10px;
+}
+
+/* Tags */
+.tags-container {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+}
+.tag {
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  color: var(--ink-mid);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tag-remove {
+  font-size: 12px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  line-height: 1;
+}
+.tag-remove:hover { color: var(--red); }
+.add-tag-btn {
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: none;
+  border: 1px dashed var(--ink-faint);
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.add-tag-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* Aliases */
+.aliases-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.alias-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.alias-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  outline: none;
+}
+.alias-input:focus { border-color: var(--ink-faint); }
+.alias-remove {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 4px;
+}
+.alias-remove:hover { color: var(--red); }
+.add-alias-btn {
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: none;
+  border: 1px dashed var(--ink-faint);
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: all 0.1s;
+  align-self: flex-start;
+}
+.add-alias-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── TABLE VIEW ────────────────────────────── */
+#table-view {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#table-view.visible { display: flex; }
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+  background: var(--white);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-mid);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+  z-index: 1;
+}
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.data-table th.sortable:hover {
+  color: var(--ink);
+}
+.data-table th .sort-icon {
+  margin-left: 4px;
+  opacity: 0.4;
+}
+.data-table th.sorted .sort-icon {
+  opacity: 1;
+}
+
+.data-table td {
+  padding: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  vertical-align: top;
+}
+
+.data-table tr:hover td {
+  background: var(--paper);
+}
+.data-table tr.selected td {
+  background: #e8f4f8;
+}
+
+.cell-content {
+  padding: 10px 12px;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.cell-content.empty {
+  color: var(--ink-faint);
+}
+.cell-text {
+  display: block;
+}
+.cell-timestamp {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 3px;
+}
+
+/* Editable cells */
+.cell-input {
+  width: 100%;
+  padding: 10px 12px;
+  min-height: 40px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+}
+.cell-input:focus {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--teal);
+}
+.cell-input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* Name column special styling */
+.cell-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+.cell-name-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.cell-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--white);
+  flex-shrink: 0;
+}
+.cell-avatar.square { border-radius: 4px; }
+.cell-name-text {
+  font-weight: 500;
+  color: var(--ink);
+}
+.cell-name-timestamp {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+.cell-name-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  min-width: 100px;
+}
+.cell-name-input:focus {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--teal);
+}
+
+/* Tags cell */
+.cell-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+}
+.cell-tag {
+  padding: 2px 6px;
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--paper-dark);
+  color: var(--ink-mid);
+  border-radius: 2px;
+}
+
+/* Row actions */
+.row-actions {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.data-table tr:hover .row-actions {
+  opacity: 1;
+}
+.row-action-btn {
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: none;
+  border: 1px solid var(--rule);
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.row-action-btn:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.row-action-btn.danger:hover {
+  background: #fef2f2;
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* Edit mode indicator */
+.edit-mode-banner {
+  display: none;
+  padding: 8px 20px;
+  background: #f0f9f4;
+  border-bottom: 1px solid #c6e6d4;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--green);
+  letter-spacing: 0.5px;
+  align-items: center;
+  gap: 8px;
+}
+.edit-mode-banner.visible {
+  display: flex;
+}
+.edit-mode-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+/* ── MODALS ────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,24,20,0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--white);
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--ink-light);
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { color: var(--ink); }
+
+.modal-body { padding: 20px; }
+
+.modal-field { margin-bottom: 16px; }
+.modal-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+}
+.modal-input, .modal-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  outline: none;
+}
+.modal-input:focus, .modal-select:focus { border-color: var(--ink-faint); }
+
+.modal-foot {
+  padding: 14px 20px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.btn {
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--paper);
+  color: var(--ink-mid);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.btn:hover { background: var(--paper-dark); color: var(--ink); }
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.btn-primary:hover { opacity: 0.9; }
+
+/* Tag suggestions */
+.tag-suggestions {
+  padding: 10px 20px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag-suggestion {
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  color: var(--ink-mid);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.tag-suggestion:hover { background: var(--paper-dark); border-color: var(--ink-faint); }
+.tag-suggestion.used { opacity: 0.4; cursor: default; }
+
+/* Tag Manager */
+.modal-hint {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.modal-divider {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 20px 0;
+}
+.tag-manager-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  min-height: 32px;
+}
+.tag-manager-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-mid);
+}
+.tag-manager-item .tag-count {
+  font-size: 9px;
+  color: var(--ink-light);
+  background: var(--paper-dark);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+.tag-manager-item .tag-remove {
+  font-size: 12px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  margin-left: 2px;
+}
+.tag-manager-item .tag-remove:hover {
+  color: var(--red);
+}
+.tag-manager-add {
+  display: flex;
+  gap: 8px;
+}
+.tag-manager-add .modal-input {
+  flex: 1;
+}
+.tag-manager-empty {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* ── TOAST ─────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  padding: 10px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 200;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-title">Index</div>
+    <div class="login-subtitle">Contact database. Sign in to continue.</div>
+    <input type="email" id="login-email" class="login-input" placeholder="you@example.com">
+    <input type="password" id="login-password" class="login-input" placeholder="Password">
+    <button id="login-btn" class="login-btn" onclick="signInWithPassword()">Sign In</button>
+    <div class="login-divider">or</div>
+    <button id="magic-link-btn" class="login-btn login-btn-secondary" onclick="sendMagicLink()">Send Magic Link</button>
+    <div id="login-message" class="login-message" style="display: none;"></div>
+    <div class="login-footer">Invite-only access</div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <!-- SET TABS -->
+  <div id="set-tabs"></div>
+  
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="sidebar-title">Index</div>
+      <div class="sidebar-sub" id="sidebar-sub">Contacts</div>
+    </div>
+    
+    <div id="sidebar-search">
+      <input type="text" id="search-input" placeholder="Search…" oninput="filterItems()">
+    </div>
+    
+    <div id="sidebar-actions">
+      <button class="btn-new" id="btn-new-item" onclick="openNewModal()">+ New Contact</button>
+    </div>
+    
+    <div id="tag-filters">
+      <div class="tag-filter-label">Filter by Tag <span class="tag-manage-link" onclick="openTagManager()">Manage</span></div>
+      <div class="tag-filters-list" id="tag-filters-list"></div>
+    </div>
+    
+    <div id="item-list"></div>
+    
+    <div id="sidebar-footer">
+      <span class="footer-count"><span id="item-count">0</span> <span id="item-count-label">contacts</span></span>
+      <div class="cortex-link" onclick="signOut()" style="cursor: pointer;" title="Sign out">
+        <span class="cortex-label">Sign Out</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- MAIN -->
+  <div id="main">
+    <!-- Toolbar -->
+    <div id="main-toolbar">
+      <div class="toolbar-title" id="toolbar-title">Contacts</div>
+      <div class="toolbar-spacer"></div>
+      <button class="toolbar-btn" onclick="openImportModal()">Import</button>
+      <div class="view-toggle">
+        <button class="view-toggle-btn" id="view-card-btn" onclick="setViewMode('card')">Card</button>
+        <button class="view-toggle-btn active" id="view-table-btn" onclick="setViewMode('table')">Table</button>
+      </div>
+      <button class="toolbar-btn" id="edit-toggle-btn" onclick="toggleEditMode()">Edit</button>
+    </div>
+    
+    <!-- Edit mode banner -->
+    <div class="edit-mode-banner" id="edit-mode-banner">
+      <div class="edit-mode-dot"></div>
+      <span>Edit Mode — changes save automatically</span>
+    </div>
+    
+    <!-- Empty state -->
+    <div id="empty-state" style="display: none;">
+      <div class="empty-icon">◎</div>
+      <div class="empty-title">No Items</div>
+      <div class="empty-hint">Create a new item to get started</div>
+    </div>
+    
+    <!-- Card/Detail view -->
+    <div id="detail-view"></div>
+    
+    <!-- Table view -->
+    <div id="table-view" class="visible">
+      <div class="table-container">
+        <table class="data-table" id="data-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW ITEM MODAL -->
+<div class="modal-overlay" id="new-modal" onclick="if(event.target===this)closeNewModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="new-modal-title">New Contact</div>
+      <button class="modal-close" onclick="closeNewModal()">×</button>
+    </div>
+    <div class="modal-body" id="new-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeNewModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createItem()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAG MODAL -->
+<div class="modal-overlay" id="tag-modal" onclick="if(event.target===this)closeTagModal()">
+  <div class="modal" style="width: 320px;">
+    <div class="modal-head">
+      <div class="modal-title">Add Tag</div>
+      <button class="modal-close" onclick="closeTagModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">New Tag</label>
+        <input type="text" class="modal-input" id="new-tag-input" placeholder="Tag name" onkeydown="if(event.key==='Enter')addTagFromInput()">
+      </div>
+    </div>
+    <div class="tag-suggestions" id="tag-suggestions"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeTagModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addTagFromInput()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SET MODAL -->
+<div class="modal-overlay" id="set-modal" onclick="if(event.target===this)closeSetModal()">
+  <div class="modal" style="width: 360px;">
+    <div class="modal-head">
+      <div class="modal-title">New Set</div>
+      <button class="modal-close" onclick="closeSetModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Set Name</label>
+        <input type="text" class="modal-input" id="new-set-name" placeholder="e.g. Vendors">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Schema Template</label>
+        <select class="modal-select" id="new-set-schema">
+          <option value="contacts">Contacts (name, email, phone, office)</option>
+          <option value="venues">Venues (name, address, capacity)</option>
+          <option value="vendors">Vendors (name, service, contact, rate)</option>
+          <option value="generic">Generic (name, notes)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeSetModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createSet()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAG MANAGER MODAL -->
+<div class="modal-overlay" id="tag-manager-modal" onclick="if(event.target===this)closeTagManager()">
+  <div class="modal" style="width: 480px;">
+    <div class="modal-head">
+      <div class="modal-title">Manage Tags</div>
+      <button class="modal-close" onclick="closeTagManager()">×</button>
+    </div>
+    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+      <!-- Suggested Tags Section -->
+      <div class="modal-field">
+        <label class="modal-label">Suggested Tags for This Set</label>
+        <p class="modal-hint">These appear as quick options when adding tags to items.</p>
+        <div class="tag-manager-list" id="suggested-tags-list"></div>
+        <div class="tag-manager-add">
+          <input type="text" class="modal-input" id="new-suggested-tag" placeholder="Add suggested tag…" onkeydown="if(event.key==='Enter')addSuggestedTag()">
+          <button class="btn" onclick="addSuggestedTag()">Add</button>
+        </div>
+      </div>
+      
+      <hr class="modal-divider">
+      
+      <!-- Tags In Use Section -->
+      <div class="modal-field">
+        <label class="modal-label">Tags In Use</label>
+        <p class="modal-hint">Tags currently assigned to items in this set. Click to remove from all items.</p>
+        <div class="tag-manager-list" id="used-tags-list"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeTagManager()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal" onclick="if(event.target===this)closeImportModal()">
+  <div class="modal" style="width: 560px;">
+    <div class="modal-head">
+      <div class="modal-title">Import Data</div>
+      <button class="modal-close" onclick="closeImportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Import Format</label>
+        <select class="modal-select" id="import-format" onchange="updateImportHelp()">
+          <option value="csv">CSV (comma-separated)</option>
+          <option value="tsv">TSV (tab-separated, paste from spreadsheet)</option>
+          <option value="json">JSON (array of objects)</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Data</label>
+        <p class="modal-hint" id="import-help">First row should be column headers. Include "name" column.</p>
+        <textarea class="modal-input" id="import-data" style="min-height: 200px; font-family: var(--mono); font-size: 11px;" placeholder="Paste your data here..."></textarea>
+      </div>
+      <div class="modal-field" id="import-preview-container" style="display: none;">
+        <label class="modal-label">Preview</label>
+        <div id="import-preview" style="max-height: 150px; overflow: auto; font-size: 11px; background: var(--paper); padding: 10px; border: 1px solid var(--rule);"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="previewImport()">Preview</button>
+      <button class="btn" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="executeImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
+// Replace these with your Supabase project values
+const SUPABASE_URL = 'https://ogpfimmxqeqqeiiqvsqk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZpbW14cWVxcWVpaXF2c3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMjY4NDksImV4cCI6MjA4NzkwMjg0OX0.nVgt6O6Lz77T55b01JqhVXeAVhoxElQ5v3bn2ETRjk4';
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── SET SCHEMAS ─────────────────────────────────────────────────────────────
+
+const SCHEMAS = {
+  contacts: {
+    label: 'Contacts',
+    labelSingular: 'Contact',
+    icon: '●',
+    avatarStyle: 'circle',
+    tableColumns: ['name', 'organization', 'role', 'email', 'phone', 'office'],
+    fields: [
+      { group: 'Contact Information', fields: [
+        { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
+        { key: 'phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
+        { key: 'mobile', label: 'Mobile', type: 'tel', placeholder: '+1 555 987 6543' },
+      ]},
+      { group: 'Location', fields: [
+        { key: 'office', label: 'Office', type: 'text', placeholder: 'Building, Floor, Room' },
+        { key: 'address', label: 'Address', type: 'text', placeholder: 'Street address, City' },
+      ]},
+      { group: 'Organization', fields: [
+        { key: 'organization', label: 'Company', type: 'text', placeholder: 'Company or organization' },
+        { key: 'role', label: 'Role', type: 'text', placeholder: 'Job title or role' },
+      ]},
+    ],
+    subtitle: item => item.organization || '',
+    meta: item => item.role || '',
+    listMeta: item => item.organization || item.role || '',
+    quickFields: ['name', 'organization', 'email'],
+    suggestedTags: ['client', 'collaborator', 'vendor', 'speaker', 'press', 'team', 'vip'],
+  },
+  
+  venues: {
+    label: 'Venues',
+    labelSingular: 'Venue',
+    icon: '◻',
+    avatarStyle: 'square',
+    tableColumns: ['name', 'neighborhood', 'capacity_seated', 'capacity_standing', 'rate_full_day', 'contact_name', 'contact_phone'],
+    fields: [
+      { group: 'Details', fields: [
+        { key: 'address', label: 'Address', type: 'text', placeholder: 'Full address' },
+        { key: 'neighborhood', label: 'Neighborhood', type: 'text', placeholder: 'Area or district' },
+      ]},
+      { group: 'Capacity & Specs', fields: [
+        { key: 'capacity_seated', label: 'Seated', type: 'text', placeholder: 'e.g. 80' },
+        { key: 'capacity_standing', label: 'Standing', type: 'text', placeholder: 'e.g. 150' },
+        { key: 'sqft', label: 'Sq Ft', type: 'text', placeholder: 'e.g. 2,400' },
+      ]},
+      { group: 'Contact', fields: [
+        { key: 'contact_name', label: 'Contact', type: 'text', placeholder: 'Contact person' },
+        { key: 'contact_email', label: 'Email', type: 'email', placeholder: 'email@venue.com' },
+        { key: 'contact_phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
+      ]},
+      { group: 'Rates', fields: [
+        { key: 'rate_half_day', label: 'Half Day', type: 'text', placeholder: 'e.g. $1,200' },
+        { key: 'rate_full_day', label: 'Full Day', type: 'text', placeholder: 'e.g. $2,000' },
+        { key: 'rate_notes', label: 'Rate Notes', type: 'text', placeholder: 'Minimums, extras, etc.' },
+      ]},
+    ],
+    subtitle: item => item.neighborhood || item.address || '',
+    meta: item => {
+      const caps = [];
+      if (item.capacity_seated) caps.push(`${item.capacity_seated} seated`);
+      if (item.capacity_standing) caps.push(`${item.capacity_standing} standing`);
+      return caps.join(' · ');
+    },
+    listMeta: item => {
+      if (item.capacity_seated) return `Seats ${item.capacity_seated}`;
+      if (item.capacity_standing) return `Fits ${item.capacity_standing}`;
+      return item.neighborhood || '';
+    },
+    quickFields: ['name', 'address', 'capacity_seated'],
+    suggestedTags: ['restaurant', 'gallery', 'studio', 'outdoor', 'private', 'hotel', 'rooftop'],
+  },
+  
+  vendors: {
+    label: 'Vendors',
+    labelSingular: 'Vendor',
+    icon: '◆',
+    avatarStyle: 'square',
+    tableColumns: ['name', 'service', 'specialty', 'rate', 'contact_name', 'email', 'phone'],
+    fields: [
+      { group: 'Service', fields: [
+        { key: 'service', label: 'Service', type: 'text', placeholder: 'e.g. Catering, Photography' },
+        { key: 'specialty', label: 'Specialty', type: 'text', placeholder: 'Specific focus or style' },
+      ]},
+      { group: 'Contact', fields: [
+        { key: 'contact_name', label: 'Contact', type: 'text', placeholder: 'Contact person' },
+        { key: 'email', label: 'Email', type: 'email', placeholder: 'email@vendor.com' },
+        { key: 'phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
+      ]},
+      { group: 'Rates', fields: [
+        { key: 'rate', label: 'Rate', type: 'text', placeholder: 'e.g. $150/hr, $2,500/event' },
+        { key: 'minimum', label: 'Minimum', type: 'text', placeholder: 'e.g. 4 hours, $500' },
+      ]},
+      { group: 'Location', fields: [
+        { key: 'address', label: 'Address', type: 'text', placeholder: 'Business address' },
+        { key: 'service_area', label: 'Service Area', type: 'text', placeholder: 'e.g. Bay Area, NYC Metro' },
+      ]},
+    ],
+    subtitle: item => item.service || '',
+    meta: item => item.rate || '',
+    listMeta: item => item.service || '',
+    quickFields: ['name', 'service', 'email'],
+    suggestedTags: ['catering', 'photo', 'video', 'flowers', 'av', 'rental', 'print', 'staffing'],
+  },
+  
+  generic: {
+    label: 'Items',
+    labelSingular: 'Item',
+    icon: '○',
+    avatarStyle: 'circle',
+    tableColumns: ['name', 'description'],
+    fields: [
+      { group: 'Details', fields: [
+        { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Description or details' },
+      ]},
+    ],
+    subtitle: item => '',
+    meta: item => '',
+    listMeta: item => '',
+    quickFields: ['name'],
+    suggestedTags: [],
+  },
+};
+
+// Column display labels
+const COLUMN_LABELS = {
+  name: 'Name',
+  organization: 'Organization',
+  role: 'Role',
+  email: 'Email',
+  phone: 'Phone',
+  mobile: 'Mobile',
+  office: 'Office',
+  address: 'Address',
+  neighborhood: 'Neighborhood',
+  capacity_seated: 'Seated',
+  capacity_standing: 'Standing',
+  sqft: 'Sq Ft',
+  contact_name: 'Contact',
+  contact_email: 'Contact Email',
+  contact_phone: 'Contact Phone',
+  rate_half_day: 'Half Day',
+  rate_full_day: 'Full Day',
+  rate_notes: 'Rate Notes',
+  service: 'Service',
+  specialty: 'Specialty',
+  rate: 'Rate',
+  minimum: 'Minimum',
+  service_area: 'Service Area',
+  description: 'Description',
+  tags: 'Tags',
+};
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+
+const AVATAR_COLORS = ['#b03020','#203070','#306030','#603070','#b07020','#207060','#702040','#204060'];
+const STORAGE_KEY = 'index_data';
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let data = { sets: [], activeSetId: null };
+let activeItemId = null;
+let activeTagFilter = null;
+let searchQuery = '';
+let viewMode = 'table'; // 'card' or 'table'
+let editMode = false;
+let sortColumn = 'name';
+let sortAsc = true;
+
+// ─── PERSISTENCE (SUPABASE) ──────────────────────────────────────────────────
+
+async function save() {
+  // Individual saves happen in specific functions
+  // This is kept for compatibility but does nothing with Supabase
+}
+
+async function loadFromSupabase() {
+  try {
+    // Load sets
+    const { data: sets, error: setsError } = await supabase
+      .from('sets')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    
+    if (setsError) throw setsError;
+    
+    // Load items
+    const { data: items, error: itemsError } = await supabase
+      .from('items')
+      .select('*');
+    
+    if (itemsError) throw itemsError;
+    
+    // Transform to local format
+    data.sets = sets.map(set => ({
+      id: set.id,
+      name: set.name,
+      schema: set.schema,
+      suggestedTags: set.suggested_tags || [],
+      items: items
+        .filter(item => item.set_id === set.id)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          aliases: item.aliases || [],
+          tags: item.tags || [],
+          notes: item.notes || '',
+          _timestamps: item.timestamps || {},
+          ...item.data
+        }))
+    }));
+    
+    if (data.sets.length && !data.activeSetId) {
+      data.activeSetId = data.sets[0].id;
+    }
+    
+  } catch (err) {
+    console.error('Load error:', err);
+    toast('Failed to load data');
+  }
+}
+
+function load() {
+  // Sync wrapper for initial load - actual loading happens after auth
+  data = { sets: [], activeSetId: null };
+}
+
+async function saveSet(set) {
+  try {
+    const { error } = await supabase
+      .from('sets')
+      .upsert({
+        id: set.id,
+        name: set.name,
+        schema: set.schema,
+        suggested_tags: set.suggestedTags || [],
+        sort_order: data.sets.findIndex(s => s.id === set.id)
+      });
+    if (error) throw error;
+  } catch (err) {
+    console.error('Save set error:', err);
+    toast('Failed to save');
+  }
+}
+
+async function deleteSetFromDB(setId) {
+  try {
+    const { error } = await supabase
+      .from('sets')
+      .delete()
+      .eq('id', setId);
+    if (error) throw error;
+  } catch (err) {
+    console.error('Delete set error:', err);
+    toast('Failed to delete');
+  }
+}
+
+async function saveItem(item, setId) {
+  try {
+    // Extract known fields and put rest in data JSONB
+    const { id, name, aliases, tags, notes, _timestamps, ...rest } = item;
+    
+    const { error } = await supabase
+      .from('items')
+      .upsert({
+        id: id,
+        set_id: setId,
+        name: name,
+        aliases: aliases || [],
+        tags: tags || [],
+        notes: notes || '',
+        data: rest,
+        timestamps: _timestamps || {}
+      });
+    if (error) throw error;
+  } catch (err) {
+    console.error('Save item error:', err);
+    toast('Failed to save');
+  }
+}
+
+async function deleteItemFromDB(itemId) {
+  try {
+    const { error } = await supabase
+      .from('items')
+      .delete()
+      .eq('id', itemId);
+    if (error) throw error;
+  } catch (err) {
+    console.error('Delete item error:', err);
+    toast('Failed to delete');
+  }
+}
+
+function getSeedData() {
+  const contactsSetId = uid();
+  const venuesSetId = uid();
+  
+  return {
+    sets: [
+      {
+        id: contactsSetId,
+        name: 'Contacts',
+        schema: 'contacts',
+        items: [
+          { id: uid(), name: 'Daniel Osei', aliases: ['Dan', 'D. Osei'], email: 'daniel@oseiworkshop.com', phone: '+1 415 555 1234', mobile: '+1 415 555 5678', office: 'Studio B, 3rd Floor', address: '123 Market St, San Francisco', organization: 'Osei Workshop', role: 'Furniture Maker', tags: ['collaborator', 'speaker'], notes: 'Met at Design Week 2024.' },
+          { id: uid(), name: 'Lena Cross', aliases: ['L. Cross'], email: 'lena@studio.co', phone: '+1 212 555 9876', mobile: '', office: 'Main Studio, 2nd Floor', address: '456 Broadway, New York', organization: 'Studio Co', role: 'Content Director', tags: ['team'], notes: 'Q2 content lead.' },
+          { id: uid(), name: 'Sarah Chen', aliases: ['S. Chen'], email: 'sarah@venturecap.com', phone: '+1 650 555 7890', mobile: '', office: 'Suite 400', address: '789 Sand Hill Rd, Menlo Park', organization: 'Venture Capital Partners', role: 'Partner', tags: ['investor', 'vip'], notes: 'Series A lead.' },
+        ],
+      },
+      {
+        id: venuesSetId,
+        name: 'Venues',
+        schema: 'venues',
+        items: [
+          { id: uid(), name: 'The Warehouse', aliases: [], address: '500 3rd St, San Francisco, CA', neighborhood: 'SoMa', capacity_seated: '80', capacity_standing: '150', sqft: '2,400', contact_name: 'Maria Santos', contact_email: 'events@thewarehouse.sf', contact_phone: '+1 415 555 3000', rate_half_day: '$1,800', rate_full_day: '$3,200', rate_notes: 'Includes basic AV.', tags: ['industrial', 'private'], notes: 'Great for 50-100 person events.' },
+          { id: uid(), name: 'Rooftop at The Maxwell', aliases: ['Maxwell Rooftop'], address: '386 Geary St, San Francisco, CA', neighborhood: 'Union Square', capacity_seated: '40', capacity_standing: '75', sqft: '1,200', contact_name: 'James Liu', contact_email: 'james@maxwellhotel.com', contact_phone: '+1 415 555 4200', rate_half_day: '$2,500', rate_full_day: '$4,000', rate_notes: 'Weather dependent.', tags: ['rooftop', 'hotel'], notes: 'Stunning views.' },
+        ],
+      },
+    ],
+    activeSetId: contactsSetId,
+  };
+}
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+
+function uid() { return Math.random().toString(36).slice(2, 11); }
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getAvatarColor(name) {
+  if (!name) return AVATAR_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatTimestamp(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  // Within last hour: "5m ago"
+  if (diffMins < 60) return diffMins <= 1 ? 'just now' : `${diffMins}m ago`;
+  // Within last 24 hours: "3h ago"
+  if (diffHours < 24) return `${diffHours}h ago`;
+  // Within last 7 days: "2d ago"
+  if (diffDays < 7) return `${diffDays}d ago`;
+  // Otherwise: "12 Jan" or "12 Jan 24"
+  const day = date.getDate();
+  const month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][date.getMonth()];
+  const year = date.getFullYear();
+  if (year === now.getFullYear()) return `${day} ${month}`;
+  return `${day} ${month} ${String(year).slice(2)}`;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── SET OPERATIONS ──────────────────────────────────────────────────────────
+
+function getActiveSet() { return data.sets.find(s => s.id === data.activeSetId); }
+function getSchema() {
+  const set = getActiveSet();
+  return set ? SCHEMAS[set.schema] || SCHEMAS.generic : SCHEMAS.generic;
+}
+
+function switchSet(setId) {
+  data.activeSetId = setId;
+  activeItemId = null;
+  activeTagFilter = null;
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  save();
+  renderAll();
+}
+
+async function createSet() {
+  const name = document.getElementById('new-set-name').value.trim();
+  const schema = document.getElementById('new-set-schema').value;
+  if (!name) { toast('Set name is required'); return; }
+  const newSet = { id: crypto.randomUUID(), name, schema, items: [], suggestedTags: [] };
+  data.sets.push(newSet);
+  data.activeSetId = newSet.id;
+  await saveSet(newSet);
+  closeSetModal();
+  renderAll();
+  toast('Set created');
+}
+
+// ─── ITEM OPERATIONS ─────────────────────────────────────────────────────────
+
+function getItem(id) {
+  const set = getActiveSet();
+  return set ? set.items.find(i => i.id === id) : null;
+}
+
+async function createItem() {
+  const set = getActiveSet();
+  if (!set) return;
+  const schema = getSchema();
+  const nameInput = document.getElementById('new-item-name');
+  const name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { toast('Name is required'); return; }
+  
+  const item = { id: crypto.randomUUID(), name, aliases: [], tags: [], notes: '', _timestamps: {} };
+  schema.quickFields.forEach(key => {
+    if (key === 'name') return;
+    const input = document.getElementById('new-item-' + key);
+    if (input) item[key] = input.value.trim();
+  });
+  
+  set.items.push(item);
+  await saveItem(item, set.id);
+  closeNewModal();
+  renderAll();
+  if (viewMode === 'card') selectItem(item.id);
+  toast(schema.labelSingular + ' created');
+}
+
+function duplicateItem(itemId) {
+  const set = getActiveSet();
+  const item = getItem(itemId || activeItemId);
+  if (!set || !item) return;
+  const schema = getSchema();
+  const dupe = { ...JSON.parse(JSON.stringify(item)), id: uid(), name: item.name + ' (copy)' };
+  set.items.push(dupe);
+  save();
+  renderAll();
+  toast(schema.labelSingular + ' duplicated');
+}
+
+async function deleteItem(itemId) {
+  const set = getActiveSet();
+  const id = itemId || activeItemId;
+  if (!set || !id) return;
+  const schema = getSchema();
+  if (!confirm('Delete this ' + schema.labelSingular.toLowerCase() + '?')) return;
+  set.items = set.items.filter(i => i.id !== id);
+  if (activeItemId === id) activeItemId = null;
+  await deleteItemFromDB(id);
+  renderAll();
+  toast(schema.labelSingular + ' deleted');
+}
+
+function selectItem(id) {
+  activeItemId = id;
+  renderItemList();
+  renderDetail();
+}
+
+// ─── VIEW MODE ───────────────────────────────────────────────────────────────
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById('view-card-btn').classList.toggle('active', mode === 'card');
+  document.getElementById('view-table-btn').classList.toggle('active', mode === 'table');
+  document.getElementById('sidebar').classList.toggle('collapsed', mode === 'table');
+  document.getElementById('detail-view').classList.toggle('visible', mode === 'card' && activeItemId);
+  document.getElementById('table-view').classList.toggle('visible', mode === 'table');
+  document.getElementById('empty-state').style.display = (mode === 'card' && !activeItemId) ? 'flex' : 'none';
+  
+  // Edit button only for table view
+  document.getElementById('edit-toggle-btn').style.display = mode === 'table' ? '' : 'none';
+  
+  if (mode === 'table') renderTable();
+  if (mode === 'card') renderDetail();
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('edit-toggle-btn').classList.toggle('active', editMode);
+  document.getElementById('edit-mode-banner').classList.toggle('visible', editMode);
+  renderTable();
+}
+
+// ─── FIELD OPERATIONS ────────────────────────────────────────────────────────
+
+async function saveField(key) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  // Initialize timestamps object if needed
+  if (!item._timestamps) item._timestamps = {};
+  
+  let newValue;
+  if (key === 'name') {
+    newValue = document.getElementById('detail-name').textContent.trim();
+    item.name = newValue;
+  } else {
+    const el = document.getElementById('field-' + key);
+    if (el) {
+      newValue = el.value;
+      item[key] = newValue;
+    }
+  }
+  
+  // Update timestamp if field has content
+  if (newValue && newValue.trim()) {
+    item._timestamps[key] = new Date().toISOString();
+  }
+  
+  await saveItem(item, set.id);
+  renderItemList();
+  updateDetailHeader();
+}
+
+async function saveTableCell(itemId, key, value) {
+  const item = getItem(itemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  // Initialize timestamps object if needed
+  if (!item._timestamps) item._timestamps = {};
+  
+  item[key] = value;
+  
+  // Update timestamp if field has content
+  if (value && value.trim()) {
+    item._timestamps[key] = new Date().toISOString();
+  }
+  
+  await saveItem(item, set.id);
+  // Update sidebar if visible
+  renderItemList();
+}
+
+// ─── ALIASES ─────────────────────────────────────────────────────────────────
+
+function renderAliases() {
+  const item = getItem(activeItemId);
+  const container = document.getElementById('aliases-list');
+  if (!container || !item) return;
+  
+  let html = '';
+  (item.aliases || []).forEach((alias, i) => {
+    html += `<div class="alias-row"><input type="text" class="alias-input" value="${escHtml(alias)}" onchange="updateAlias(${i}, this.value)"><button class="alias-remove" onclick="removeAlias(${i})">×</button></div>`;
+  });
+  html += `<button class="add-alias-btn" onclick="addAlias()">+ Add Alias</button>`;
+  container.innerHTML = html;
+}
+
+function addAlias() {
+  const item = getItem(activeItemId);
+  if (!item) return;
+  if (!item.aliases) item.aliases = [];
+  item.aliases.push('');
+  save();
+  renderAliases();
+  const inputs = document.querySelectorAll('.alias-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function updateAlias(index, value) {
+  const item = getItem(activeItemId);
+  if (!item || !item.aliases) return;
+  item.aliases[index] = value.trim();
+  save();
+}
+
+function removeAlias(index) {
+  const item = getItem(activeItemId);
+  if (!item || !item.aliases) return;
+  item.aliases.splice(index, 1);
+  save();
+  renderAliases();
+}
+
+// ─── TAGS ────────────────────────────────────────────────────────────────────
+
+function getAllTags() {
+  const set = getActiveSet();
+  if (!set) return [];
+  const tagSet = new Set();
+  set.items.forEach(i => (i.tags || []).forEach(t => tagSet.add(t)));
+  return Array.from(tagSet).sort();
+}
+
+function renderTags() {
+  const item = getItem(activeItemId);
+  const container = document.getElementById('tags-container');
+  if (!container || !item) return;
+  
+  let html = '';
+  (item.tags || []).forEach(tag => {
+    html += `<div class="tag">${escHtml(tag)}<span class="tag-remove" onclick="removeTag('${escHtml(tag)}')">×</span></div>`;
+  });
+  html += `<button class="add-tag-btn" onclick="openTagModal()">+ Tag</button>`;
+  container.innerHTML = html;
+}
+
+function openTagModal() {
+  document.getElementById('tag-modal').classList.add('open');
+  document.getElementById('new-tag-input').value = '';
+  document.getElementById('new-tag-input').focus();
+  renderTagSuggestions();
+}
+
+function closeTagModal() { document.getElementById('tag-modal').classList.remove('open'); }
+
+function addTag(tag) {
+  const item = getItem(activeItemId);
+  if (!item) return;
+  if (!item.tags) item.tags = [];
+  if (item.tags.includes(tag)) return;
+  item.tags.push(tag);
+  save();
+  renderTags();
+  renderTagFilters();
+  closeTagModal();
+}
+
+function addTagFromInput() {
+  const input = document.getElementById('new-tag-input');
+  const tag = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (!tag) return;
+  addTag(tag);
+}
+
+function removeTag(tag) {
+  const item = getItem(activeItemId);
+  if (!item || !item.tags) return;
+  item.tags = item.tags.filter(t => t !== tag);
+  save();
+  renderTags();
+  renderTagFilters();
+}
+
+// ─── TAG FILTERS ─────────────────────────────────────────────────────────────
+
+function renderTagFilters() {
+  const tags = getAllTags();
+  const container = document.getElementById('tag-filters-list');
+  let html = `<div class="tag-filter ${!activeTagFilter ? 'active' : ''}" onclick="setTagFilter(null)">All</div>`;
+  tags.forEach(tag => {
+    html += `<div class="tag-filter ${activeTagFilter === tag ? 'active' : ''}" onclick="setTagFilter('${escHtml(tag)}')">${escHtml(tag)}</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function setTagFilter(tag) {
+  activeTagFilter = tag;
+  renderTagFilters();
+  renderItemList();
+  renderTable();
+}
+
+// ─── FILTERING & SORTING ─────────────────────────────────────────────────────
+
+function filterItems() {
+  searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+  renderItemList();
+  renderTable();
+}
+
+function getFilteredItems() {
+  const set = getActiveSet();
+  if (!set) return [];
+  
+  let items = set.items.filter(item => {
+    if (activeTagFilter && !(item.tags || []).includes(activeTagFilter)) return false;
+    if (searchQuery) {
+      const searchFields = [item.name, ...(item.aliases || []), item.organization, item.email, item.service, item.address].filter(Boolean).map(s => s.toLowerCase());
+      if (!searchFields.some(f => f.includes(searchQuery))) return false;
+    }
+    return true;
+  });
+  
+  // Sort
+  items.sort((a, b) => {
+    const aVal = (a[sortColumn] || '').toString().toLowerCase();
+    const bVal = (b[sortColumn] || '').toString().toLowerCase();
+    const cmp = aVal.localeCompare(bVal);
+    return sortAsc ? cmp : -cmp;
+  });
+  
+  return items;
+}
+
+function setSortColumn(col) {
+  if (sortColumn === col) {
+    sortAsc = !sortAsc;
+  } else {
+    sortColumn = col;
+    sortAsc = true;
+  }
+  renderTable();
+}
+
+// ─── RENDERING ───────────────────────────────────────────────────────────────
+
+function renderSetTabs() {
+  const container = document.getElementById('set-tabs');
+  let html = data.sets.map((set, index) => `
+    <div class="set-tab ${set.id === data.activeSetId ? 'active' : ''}" 
+         data-set-id="${set.id}"
+         data-index="${index}"
+         draggable="true"
+         onclick="switchSet('${set.id}')"
+         oncontextmenu="showSetContextMenu(event, '${set.id}')"
+         ondragstart="onSetDragStart(event)"
+         ondragover="onSetDragOver(event)"
+         ondragleave="onSetDragLeave(event)"
+         ondrop="onSetDrop(event)"
+         ondragend="onSetDragEnd(event)">
+      ${escHtml(set.name)}
+    </div>
+  `).join('');
+  html += `<div class="set-tab-spacer"></div>`;
+  html += `<div class="set-tab set-tab-add" onclick="openSetModal()">+</div>`;
+  container.innerHTML = html;
+}
+
+// ─── SET DRAG AND DROP ───────────────────────────────────────────────────────
+
+let draggedSetId = null;
+
+function onSetDragStart(e) {
+  draggedSetId = e.target.dataset.setId;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onSetDragOver(e) {
+  e.preventDefault();
+  const tab = e.target.closest('.set-tab');
+  if (tab && tab.dataset.setId !== draggedSetId) {
+    tab.classList.add('drag-over');
+  }
+}
+
+function onSetDragLeave(e) {
+  const tab = e.target.closest('.set-tab');
+  if (tab) tab.classList.remove('drag-over');
+}
+
+function onSetDrop(e) {
+  e.preventDefault();
+  const targetTab = e.target.closest('.set-tab');
+  if (!targetTab || !draggedSetId) return;
+  
+  const targetId = targetTab.dataset.setId;
+  if (targetId === draggedSetId) return;
+  
+  // Find indices
+  const fromIndex = data.sets.findIndex(s => s.id === draggedSetId);
+  const toIndex = data.sets.findIndex(s => s.id === targetId);
+  
+  if (fromIndex === -1 || toIndex === -1) return;
+  
+  // Reorder
+  const [moved] = data.sets.splice(fromIndex, 1);
+  data.sets.splice(toIndex, 0, moved);
+  
+  save();
+  renderSetTabs();
+  toast('Set reordered');
+}
+
+function onSetDragEnd(e) {
+  draggedSetId = null;
+  document.querySelectorAll('.set-tab').forEach(tab => {
+    tab.classList.remove('dragging', 'drag-over');
+  });
+}
+
+// ─── SET CONTEXT MENU ────────────────────────────────────────────────────────
+
+function showSetContextMenu(e, setId) {
+  e.preventDefault();
+  
+  // For now, just confirm and delete directly
+  // Could build a proper context menu later
+  const set = data.sets.find(s => s.id === setId);
+  if (!set) return;
+  
+  const itemCount = set.items.length;
+  const message = itemCount > 0 
+    ? `Delete "${set.name}" and its ${itemCount} item${itemCount === 1 ? '' : 's'}?`
+    : `Delete "${set.name}"?`;
+  
+  if (confirm(message)) {
+    deleteSet(setId);
+  }
+}
+
+async function deleteSet(setId) {
+  const index = data.sets.findIndex(s => s.id === setId);
+  if (index === -1) return;
+  
+  const wasActive = data.activeSetId === setId;
+  data.sets.splice(index, 1);
+  
+  // If we deleted the active set, switch to another
+  if (wasActive && data.sets.length > 0) {
+    data.activeSetId = data.sets[Math.min(index, data.sets.length - 1)].id;
+  } else if (data.sets.length === 0) {
+    data.activeSetId = null;
+  }
+  
+  activeItemId = null;
+  await deleteSetFromDB(setId);
+  renderAll();
+  toast('Set deleted');
+}
+
+function renderSidebar() {
+  const set = getActiveSet();
+  const schema = getSchema();
+  document.getElementById('sidebar-sub').textContent = set ? set.name : '';
+  document.getElementById('btn-new-item').textContent = '+ New ' + schema.labelSingular;
+  document.getElementById('search-input').placeholder = 'Search ' + schema.label.toLowerCase() + '…';
+  document.getElementById('item-count-label').textContent = schema.label.toLowerCase();
+  document.getElementById('toolbar-title').textContent = set ? set.name : 'Index';
+}
+
+function renderItemList() {
+  const set = getActiveSet();
+  const schema = getSchema();
+  const filtered = getFilteredItems();
+  const container = document.getElementById('item-list');
+  
+  container.innerHTML = filtered.map(item => `
+    <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
+      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div>
+      <div class="list-info">
+        <div class="list-name">${escHtml(item.name)}</div>
+        <div class="list-meta">${escHtml(schema.listMeta(item))}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  document.getElementById('item-count').textContent = set ? set.items.length : 0;
+}
+
+function renderTable() {
+  const schema = getSchema();
+  const filtered = getFilteredItems();
+  const columns = schema.tableColumns || ['name'];
+  
+  // Render header
+  const thead = document.getElementById('table-head');
+  let headerHtml = '<tr>';
+  columns.forEach(col => {
+    const label = COLUMN_LABELS[col] || col;
+    const isSorted = sortColumn === col;
+    const arrow = isSorted ? (sortAsc ? '↑' : '↓') : '↕';
+    headerHtml += `<th class="sortable ${isSorted ? 'sorted' : ''}" onclick="setSortColumn('${col}')">${escHtml(label)}<span class="sort-icon">${arrow}</span></th>`;
+  });
+  headerHtml += '<th>Tags</th>';
+  if (editMode) headerHtml += '<th></th>'; // Actions column
+  headerHtml += '</tr>';
+  thead.innerHTML = headerHtml;
+  
+  // Render body
+  const tbody = document.getElementById('table-body');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${columns.length + 2}" style="padding: 40px; text-align: center; color: var(--ink-faint);">No items found</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(item => {
+    const timestamps = item._timestamps || {};
+    let rowHtml = `<tr data-id="${item.id}">`;
+    
+    columns.forEach(col => {
+      const ts = timestamps[col];
+      const tsDisplay = ts ? formatTimestamp(ts) : '';
+      
+      if (col === 'name') {
+        // Special name column with avatar
+        if (editMode) {
+          rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div><input class="cell-name-input" value="${escHtml(item.name)}" onchange="saveTableCell('${item.id}', 'name', this.value)" onblur="renderTable()"></div></td>`;
+        } else {
+          rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div><div class="cell-name-block"><span class="cell-name-text">${escHtml(item.name)}</span>${tsDisplay ? `<span class="cell-name-timestamp">${tsDisplay}</span>` : ''}</div></div></td>`;
+        }
+      } else {
+        const value = item[col] || '';
+        if (editMode) {
+          rowHtml += `<td><input class="cell-input" value="${escHtml(value)}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
+        } else {
+          if (value) {
+            rowHtml += `<td><div class="cell-content"><span class="cell-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-timestamp">${tsDisplay}</span>` : ''}</div></td>`;
+          } else {
+            rowHtml += `<td><div class="cell-content empty">—</div></td>`;
+          }
+        }
+      }
+    });
+    
+    // Tags column
+    const tags = item.tags || [];
+    rowHtml += `<td><div class="cell-tags">${tags.map(t => `<span class="cell-tag">${escHtml(t)}</span>`).join('')}</div></td>`;
+    
+    // Actions column (edit mode only)
+    if (editMode) {
+      rowHtml += `<td><div class="row-actions"><button class="row-action-btn danger" onclick="deleteItem('${item.id}')">Delete</button></div></td>`;
+    }
+    
+    rowHtml += '</tr>';
+    return rowHtml;
+  }).join('');
+}
+
+function renderDetail() {
+  const item = getItem(activeItemId);
+  const schema = getSchema();
+  const emptyState = document.getElementById('empty-state');
+  const detail = document.getElementById('detail-view');
+  
+  if (!item || viewMode !== 'card') {
+    if (viewMode === 'card') {
+      emptyState.style.display = 'flex';
+      detail.classList.remove('visible');
+    }
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  detail.classList.add('visible');
+  
+  const timestamps = item._timestamps || {};
+  
+  let html = `
+    <div class="detail-header">
+      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div>
+      <div class="detail-title-block">
+        <div class="detail-name" id="detail-name" contenteditable="true" onblur="saveField('name')">${escHtml(item.name)}</div>
+        <div class="detail-subtitle" id="detail-subtitle">${escHtml(schema.subtitle(item))}</div>
+        <div class="detail-meta" id="detail-meta">${escHtml(schema.meta(item))}</div>
+      </div>
+      <div class="detail-actions">
+        <button class="detail-btn" onclick="duplicateItem()">Duplicate</button>
+        <button class="detail-btn danger" onclick="deleteItem()">Delete</button>
+      </div>
+    </div>
+    <div class="detail-body">
+  `;
+  
+  schema.fields.forEach(group => {
+    html += `<div class="field-group"><div class="field-group-title">${escHtml(group.group)}</div>`;
+    group.fields.forEach(field => {
+      const value = item[field.key] || '';
+      const ts = timestamps[field.key];
+      const tsDisplay = (value && ts) ? formatTimestamp(ts) : '';
+      
+      if (field.type === 'textarea') {
+        html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><textarea class="field-value" id="field-${field.key}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${escHtml(value)}</textarea>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+      } else {
+        html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><input type="${field.type}" class="field-value" id="field-${field.key}" value="${escHtml(value)}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+      }
+    });
+    html += `</div>`;
+  });
+  
+  // Notes field with timestamp
+  const notesTs = timestamps['notes'];
+  const notesTsDisplay = (item.notes && notesTs) ? formatTimestamp(notesTs) : '';
+  
+  html += `<div class="field-group"><div class="field-group-title">Aliases (for name matching)</div><div class="field-row"><div class="field-label">Names</div><div class="aliases-list" id="aliases-list"></div></div></div>`;
+  html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="field-row"><div class="field-label">Tags</div><div class="tags-container" id="tags-container"></div></div></div>`;
+  html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><textarea class="field-value" id="field-notes" placeholder="Additional notes…" onchange="saveField('notes')">${escHtml(item.notes || '')}</textarea>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
+  html += `</div>`;
+  
+  detail.innerHTML = html;
+  renderAliases();
+  renderTags();
+}
+
+function updateDetailHeader() {
+  const item = getItem(activeItemId);
+  const schema = getSchema();
+  if (!item) return;
+  const avatar = document.getElementById('detail-avatar');
+  if (avatar) { avatar.textContent = getInitials(item.name); avatar.style.background = getAvatarColor(item.name); }
+  const subtitle = document.getElementById('detail-subtitle');
+  if (subtitle) subtitle.textContent = schema.subtitle(item);
+  const meta = document.getElementById('detail-meta');
+  if (meta) meta.textContent = schema.meta(item);
+}
+
+function renderAll() {
+  renderSetTabs();
+  renderSidebar();
+  renderTagFilters();
+  renderItemList();
+  if (viewMode === 'table') renderTable();
+  else renderDetail();
+}
+
+// ─── MODALS ──────────────────────────────────────────────────────────────────
+
+function openNewModal() {
+  const schema = getSchema();
+  document.getElementById('new-modal-title').textContent = 'New ' + schema.labelSingular;
+  let html = '';
+  schema.quickFields.forEach(key => {
+    const label = key === 'name' ? 'Name *' : key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+    const field = schema.fields.flatMap(g => g.fields).find(f => f.key === key);
+    const placeholder = field ? field.placeholder : '';
+    html += `<div class="modal-field"><label class="modal-label">${label}</label><input type="text" class="modal-input" id="new-item-${key}" placeholder="${escHtml(placeholder)}"></div>`;
+  });
+  document.getElementById('new-modal-body').innerHTML = html;
+  document.getElementById('new-modal').classList.add('open');
+  setTimeout(() => { const firstInput = document.getElementById('new-item-' + schema.quickFields[0]); if (firstInput) firstInput.focus(); }, 100);
+}
+
+function closeNewModal() { document.getElementById('new-modal').classList.remove('open'); }
+function openSetModal() { document.getElementById('set-modal').classList.add('open'); document.getElementById('new-set-name').value = ''; document.getElementById('new-set-name').focus(); }
+function closeSetModal() { document.getElementById('set-modal').classList.remove('open'); }
+
+// ─── TAG MANAGER ─────────────────────────────────────────────────────────────
+
+function openTagManager() {
+  document.getElementById('tag-manager-modal').classList.add('open');
+  renderTagManager();
+}
+
+function closeTagManager() {
+  document.getElementById('tag-manager-modal').classList.remove('open');
+}
+
+function renderTagManager() {
+  const set = getActiveSet();
+  if (!set) return;
+  
+  // Get suggested tags (stored on set, or fall back to schema defaults)
+  const schema = getSchema();
+  const suggestedTags = set.suggestedTags || [...(schema.suggestedTags || [])];
+  
+  // Get tags in use with counts
+  const tagCounts = {};
+  set.items.forEach(item => {
+    (item.tags || []).forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+  const usedTags = Object.keys(tagCounts).sort();
+  
+  // Render suggested tags
+  const suggestedList = document.getElementById('suggested-tags-list');
+  if (suggestedTags.length === 0) {
+    suggestedList.innerHTML = '<span class="tag-manager-empty">No suggested tags</span>';
+  } else {
+    suggestedList.innerHTML = suggestedTags.map(tag => `
+      <div class="tag-manager-item">
+        ${escHtml(tag)}
+        <span class="tag-remove" onclick="removeSuggestedTag('${escHtml(tag)}')" title="Remove from suggestions">×</span>
+      </div>
+    `).join('');
+  }
+  
+  // Render used tags
+  const usedList = document.getElementById('used-tags-list');
+  if (usedTags.length === 0) {
+    usedList.innerHTML = '<span class="tag-manager-empty">No tags in use</span>';
+  } else {
+    usedList.innerHTML = usedTags.map(tag => `
+      <div class="tag-manager-item">
+        ${escHtml(tag)}
+        <span class="tag-count">${tagCounts[tag]}</span>
+        <span class="tag-remove" onclick="removeTagFromAllItems('${escHtml(tag)}')" title="Remove from all items">×</span>
+      </div>
+    `).join('');
+  }
+}
+
+function addSuggestedTag() {
+  const input = document.getElementById('new-suggested-tag');
+  const tag = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (!tag) return;
+  
+  const set = getActiveSet();
+  if (!set) return;
+  
+  // Initialize suggestedTags on set if not present
+  if (!set.suggestedTags) {
+    const schema = getSchema();
+    set.suggestedTags = [...(schema.suggestedTags || [])];
+  }
+  
+  if (set.suggestedTags.includes(tag)) {
+    toast('Tag already in suggestions');
+    return;
+  }
+  
+  set.suggestedTags.push(tag);
+  set.suggestedTags.sort();
+  save();
+  input.value = '';
+  renderTagManager();
+  toast('Suggested tag added');
+}
+
+function removeSuggestedTag(tag) {
+  const set = getActiveSet();
+  if (!set) return;
+  
+  if (!set.suggestedTags) {
+    const schema = getSchema();
+    set.suggestedTags = [...(schema.suggestedTags || [])];
+  }
+  
+  set.suggestedTags = set.suggestedTags.filter(t => t !== tag);
+  save();
+  renderTagManager();
+  toast('Suggested tag removed');
+}
+
+function removeTagFromAllItems(tag) {
+  const set = getActiveSet();
+  if (!set) return;
+  
+  const count = set.items.filter(i => (i.tags || []).includes(tag)).length;
+  if (!confirm(`Remove "${tag}" from ${count} item${count === 1 ? '' : 's'}?`)) return;
+  
+  set.items.forEach(item => {
+    if (item.tags) {
+      item.tags = item.tags.filter(t => t !== tag);
+    }
+  });
+  
+  save();
+  renderTagManager();
+  renderTagFilters();
+  renderTags();
+  renderTable();
+  toast(`Tag "${tag}" removed from all items`);
+}
+
+// Update renderTagSuggestions to use set-specific suggested tags
+function renderTagSuggestions() {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  const schema = getSchema();
+  const currentTags = item ? (item.tags || []) : [];
+  
+  // Use set-specific suggested tags if available, otherwise schema defaults
+  const suggestedTags = set?.suggestedTags || schema.suggestedTags || [];
+  const allTags = [...new Set([...suggestedTags, ...getAllTags()])];
+  
+  const container = document.getElementById('tag-suggestions');
+  container.innerHTML = allTags.map(tag => {
+    const used = currentTags.includes(tag);
+    return `<div class="tag-suggestion ${used ? 'used' : ''}" onclick="${used ? '' : `addTag('${escHtml(tag)}')`}">${escHtml(tag)}</div>`;
+  }).join('');
+}
+
+// ─── IMPORT ──────────────────────────────────────────────────────────────────
+
+let importedData = [];
+
+function openImportModal() {
+  document.getElementById('import-modal').classList.add('open');
+  document.getElementById('import-data').value = '';
+  document.getElementById('import-preview-container').style.display = 'none';
+  importedData = [];
+  updateImportHelp();
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('open');
+  importedData = [];
+}
+
+function updateImportHelp() {
+  const format = document.getElementById('import-format').value;
+  const help = document.getElementById('import-help');
+  
+  if (format === 'csv') {
+    help.textContent = 'First row should be column headers. Include a "name" column. Example: name,email,phone';
+  } else if (format === 'tsv') {
+    help.textContent = 'Paste directly from Excel/Sheets. First row should be headers. Include a "name" column.';
+  } else {
+    help.textContent = 'Array of objects with at least a "name" property. Example: [{"name": "John", "email": "john@example.com"}]';
+  }
+}
+
+function parseCSV(text, delimiter = ',') {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  
+  // Parse header
+  const headers = parseCSVLine(lines[0], delimiter).map(h => h.toLowerCase().trim().replace(/\s+/g, '_'));
+  
+  // Parse rows
+  const items = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i], delimiter);
+    if (values.length === 0 || (values.length === 1 && !values[0])) continue;
+    
+    const item = { id: uid(), aliases: [], tags: [], notes: '' };
+    headers.forEach((header, idx) => {
+      if (values[idx] !== undefined) {
+        item[header] = values[idx].trim();
+      }
+    });
+    
+    if (item.name) {
+      items.push(item);
+    }
+  }
+  
+  return items;
+}
+
+function parseCSVLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  
+  return result;
+}
+
+function parseJSON(text) {
+  try {
+    const parsed = JSON.parse(text);
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    
+    return arr.filter(item => item.name).map(item => ({
+      id: uid(),
+      aliases: [],
+      tags: [],
+      notes: '',
+      ...item
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function previewImport() {
+  const format = document.getElementById('import-format').value;
+  const text = document.getElementById('import-data').value;
+  
+  if (!text.trim()) {
+    toast('No data to preview');
+    return;
+  }
+  
+  if (format === 'csv') {
+    importedData = parseCSV(text, ',');
+  } else if (format === 'tsv') {
+    importedData = parseCSV(text, '\t');
+  } else {
+    importedData = parseJSON(text);
+  }
+  
+  const previewContainer = document.getElementById('import-preview-container');
+  const preview = document.getElementById('import-preview');
+  
+  if (importedData.length === 0) {
+    preview.innerHTML = '<span style="color: var(--red);">No valid items found. Make sure you have a "name" column/field.</span>';
+  } else {
+    const schema = getSchema();
+    const columns = ['name', ...schema.tableColumns.filter(c => c !== 'name').slice(0, 4)];
+    
+    let html = `<strong>${importedData.length} item${importedData.length === 1 ? '' : 's'} to import:</strong><br><br>`;
+    html += '<table style="width: 100%; font-size: 10px; border-collapse: collapse;">';
+    html += '<tr>' + columns.map(c => `<th style="text-align: left; padding: 4px; border-bottom: 1px solid var(--rule);">${escHtml(COLUMN_LABELS[c] || c)}</th>`).join('') + '</tr>';
+    
+    importedData.slice(0, 5).forEach(item => {
+      html += '<tr>' + columns.map(c => `<td style="padding: 4px; border-bottom: 1px solid rgba(0,0,0,0.05);">${escHtml(item[c] || '')}</td>`).join('') + '</tr>';
+    });
+    
+    if (importedData.length > 5) {
+      html += `<tr><td colspan="${columns.length}" style="padding: 4px; color: var(--ink-light);">...and ${importedData.length - 5} more</td></tr>`;
+    }
+    html += '</table>';
+    preview.innerHTML = html;
+  }
+  
+  previewContainer.style.display = 'block';
+}
+
+function executeImport() {
+  if (importedData.length === 0) {
+    previewImport();
+    if (importedData.length === 0) {
+      toast('No valid items to import');
+      return;
+    }
+  }
+  
+  const set = getActiveSet();
+  if (!set) {
+    toast('No set selected');
+    return;
+  }
+  
+  // Add timestamps for all fields with content
+  const now = new Date().toISOString();
+  importedData.forEach(item => {
+    item._timestamps = {};
+    Object.keys(item).forEach(key => {
+      if (key !== 'id' && key !== 'aliases' && key !== 'tags' && key !== '_timestamps' && item[key]) {
+        item._timestamps[key] = now;
+      }
+    });
+  });
+  
+  set.items.push(...importedData);
+  save();
+  
+  const count = importedData.length;
+  closeImportModal();
+  renderAll();
+  toast(`Imported ${count} item${count === 1 ? '' : 's'}`);
+}
+
+// ─── CORTEX INTEGRATION ──────────────────────────────────────────────────────
+
+window.INDEX = {
+  lookup(query, setName = null) {
+    if (!query) return null;
+    const q = query.toLowerCase().trim();
+    const setsToSearch = setName ? data.sets.filter(s => s.name.toLowerCase() === setName.toLowerCase()) : data.sets;
+    for (const set of setsToSearch) {
+      const found = set.items.find(item => {
+        if (item.name.toLowerCase() === q) return true;
+        if ((item.aliases || []).some(a => a.toLowerCase() === q)) return true;
+        return false;
+      });
+      if (found) return { ...found, _set: set.name, _schema: set.schema };
+    }
+    return null;
+  },
+  search(query, setName = null) {
+    if (!query) return [];
+    const q = query.toLowerCase().trim();
+    const setsToSearch = setName ? data.sets.filter(s => s.name.toLowerCase() === setName.toLowerCase()) : data.sets;
+    const results = [];
+    for (const set of setsToSearch) {
+      set.items.forEach(item => {
+        const fields = [item.name, ...(item.aliases || []), item.organization, item.email, item.service, item.address].filter(Boolean);
+        if (fields.some(f => f.toLowerCase().includes(q))) results.push({ ...item, _set: set.name, _schema: set.schema });
+      });
+    }
+    return results;
+  },
+  getAll(setName = null) {
+    if (setName) {
+      const set = data.sets.find(s => s.name.toLowerCase() === setName.toLowerCase());
+      return set ? set.items.map(i => ({ ...i, _set: set.name })) : [];
+    }
+    return data.sets.flatMap(set => set.items.map(i => ({ ...i, _set: set.name })));
+  },
+  getSets() { return data.sets.map(s => ({ id: s.id, name: s.name, schema: s.schema, count: s.items.length })); },
+  isAvailable: true,
+  version: '2.0',
+};
+
+function checkCortexLink() {
+  const cortexData = localStorage.getItem('cortex_projects');
+  document.getElementById('cortex-dot').classList.toggle('disconnected', !cortexData);
+}
+
+// ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
+
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); openNewModal(); }
+  if (e.key === 'Escape') { closeNewModal(); closeTagModal(); closeSetModal(); closeTagManager(); closeImportModal(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); document.getElementById('search-input').focus(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'e' && viewMode === 'table') { e.preventDefault(); toggleEditMode(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'i') { e.preventDefault(); openImportModal(); }
+});
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+
+async function signInWithPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const msg = document.getElementById('login-message');
+  
+  if (!email || !password) {
+    msg.textContent = 'Please enter email and password';
+    msg.className = 'login-message error';
+    msg.style.display = 'block';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+  
+  if (error) {
+    msg.textContent = error.message;
+    msg.className = 'login-message error';
+    msg.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('login-email').value.trim();
+  const btn = document.getElementById('login-btn');
+  const msg = document.getElementById('login-message');
+  
+  if (!email) {
+    msg.textContent = 'Please enter your email';
+    msg.className = 'login-message error';
+    msg.style.display = 'block';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email: email,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
+  });
+  
+  if (error) {
+    msg.textContent = error.message;
+    msg.className = 'login-message error';
+    btn.disabled = false;
+    btn.textContent = 'Send Magic Link';
+  } else {
+    msg.textContent = 'Check your email for the login link!';
+    msg.className = 'login-message success';
+  }
+  msg.style.display = 'block';
+}
+
+async function checkAuth() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  
+  if (session) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    await initApp();
+  } else {
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+  }
+}
+
+async function signOut() {
+  await supabaseClient.auth.signOut();
+  window.location.reload();
+}
+
+// Listen for auth changes (magic link callback)
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    await initApp();
+  }
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+async function initApp() {
+  await loadFromSupabase();
+  renderAll();
+  setViewMode('table');
+  checkCortexLink();
+  setInterval(checkCortexLink, 5000);
+  console.log('[INDEX] Loaded', data.sets.length, 'sets');
+}
+
+// Check auth on page load
+checkAuth();
+</script>
+</body>
+</html>
