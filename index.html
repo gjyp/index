@@ -749,7 +749,7 @@ body {
 .list-item:hover { background: rgba(255,255,255,0.05); }
 .list-item.active { 
   background: rgba(255,255,255,0.09); 
-  border-left-color: var(--teal); 
+  border-left-color: rgba(255,255,255,0.5); 
 }
 
 .list-avatar {
@@ -4375,8 +4375,12 @@ async function initApp() {
   console.log('[INDEX] Loaded', data.sets.length, 'sets');
 }
 
-// Check auth on page load
-checkAuth();
+// Check auth on page load (wait for DOM to be ready)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkAuth);
+} else {
+  checkAuth();
+}
 </script>
 </body>
 </html>
