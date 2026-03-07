@@ -2252,7 +2252,7 @@ async function loadFromSupabase() {
           tags: item.tags || [],
           notes: item.notes || '',
           _timestamps: item.timestamps || {},
-          ...item.data
+          ...(item.data || {})
         }))
     }));
     
@@ -4364,17 +4364,23 @@ async function signOut() {
 // Single auth listener - handles ALL auth events including INITIAL_SESSION
 let appInitializing = false; // Prevent concurrent initialization
 
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
+function startApp() {
+  if (appInitialized || appInitializing) return;
+  appInitializing = true;
+  showApp();
+  // Defer initApp to next tick to avoid Supabase internal blocking
+  setTimeout(async () => {
+    await initApp();
+    appInitialized = true;
+    appInitializing = false;
+  }, 0);
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
   console.log('[INDEX] Auth event:', event, 'session:', session ? 'exists' : 'null');
   
   if (session) {
-    if (!appInitialized && !appInitializing) {
-      appInitializing = true;
-      showApp();
-      await initApp();
-      appInitialized = true;
-      appInitializing = false;
-    }
+    startApp();
   } else {
     showLogin();
     appInitialized = false;
@@ -4383,14 +4389,10 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 });
 
 // Also check for existing session in case INITIAL_SESSION fired before listener was attached
-supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
   console.log('[INDEX] getSession check:', session ? 'exists' : 'null');
-  if (session && !appInitialized && !appInitializing) {
-    appInitializing = true;
-    showApp();
-    await initApp();
-    appInitialized = true;
-    appInitializing = false;
+  if (session) {
+    startApp();
   }
 });
 
