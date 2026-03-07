@@ -2004,7 +2004,13 @@ console.log('[INDEX] Creating Supabase client...');
 
 let supabaseClient;
 try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
   console.log('[INDEX] Supabase client created');
 } catch (err) {
   console.error('[INDEX] Failed to create Supabase client:', err);
@@ -2214,36 +2220,20 @@ async function save() {
 }
 
 async function loadFromSupabase() {
-  const timeout = (ms) => new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('Request timeout')), ms)
-  );
-  
   try {
     console.log('[INDEX] Fetching sets...');
-    // Load sets with timeout
-    const setsPromise = supabaseClient
+    const { data: sets, error: setsError } = await supabaseClient
       .from('sets')
       .select('*')
       .order('sort_order', { ascending: true });
-    
-    const { data: sets, error: setsError } = await Promise.race([
-      setsPromise,
-      timeout(10000)
-    ]);
     
     console.log('[INDEX] Sets result:', sets?.length || 0, 'sets, error:', setsError);
     if (setsError) throw setsError;
     
     console.log('[INDEX] Fetching items...');
-    // Load items with timeout
-    const itemsPromise = supabaseClient
+    const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
-    
-    const { data: items, error: itemsError } = await Promise.race([
-      itemsPromise,
-      timeout(10000)
-    ]);
     
     console.log('[INDEX] Items result:', items?.length || 0, 'items, error:', itemsError);
     if (itemsError) throw itemsError;
@@ -4290,6 +4280,18 @@ document.addEventListener('keydown', (e) => {
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 
+let appInitialized = false;
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
 async function signInWithPassword() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -4338,7 +4340,7 @@ async function sendMagicLink() {
   const { error } = await supabaseClient.auth.signInWithOtp({
     email: email,
     options: {
-      emailRedirectTo: window.location.origin + window.location.pathname
+      emailRedirectTo: window.location.href
     }
   });
   
@@ -4354,46 +4356,24 @@ async function sendMagicLink() {
   msg.style.display = 'block';
 }
 
-async function checkAuth() {
-  console.log('[INDEX] checkAuth starting...');
-  try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    console.log('[INDEX] Session:', session ? 'exists' : 'none');
-    
-    if (session) {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      if (!appInitialized) {
-        appInitialized = true;
-        await initApp();
-      }
-    } else {
-      document.getElementById('login-screen').classList.remove('hidden');
-      document.getElementById('app').classList.add('hidden');
-    }
-  } catch (err) {
-    console.error('[INDEX] checkAuth error:', err);
-  }
-}
-
 async function signOut() {
   await supabaseClient.auth.signOut();
   window.location.reload();
 }
 
-// Listen for auth changes (magic link callback)
-let appInitialized = false;
-
+// Single auth listener - handles ALL auth events including INITIAL_SESSION
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
-  console.log('[INDEX] Auth state change:', event, 'session:', session ? 'exists' : 'null');
+  console.log('[INDEX] Auth event:', event, 'session:', session ? 'exists' : 'null');
   
-  // Only initialize on SIGNED_IN with a valid session
-  // INITIAL_SESSION is handled by checkAuth
-  if (event === 'SIGNED_IN' && session && !appInitialized) {
-    appInitialized = true;
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    await initApp();
+  if (session) {
+    if (!appInitialized) {
+      appInitialized = true;
+      showApp();
+      await initApp();
+    }
+  } else {
+    showLogin();
+    appInitialized = false;
   }
 });
 
@@ -4429,13 +4409,6 @@ async function initApp() {
   checkCortexLink();
   setInterval(checkCortexLink, 5000);
   console.log('[INDEX] initApp complete');
-}
-
-// Check auth on page load (wait for DOM to be ready)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', checkAuth);
-} else {
-  checkAuth();
 }
 </script>
 </body>
