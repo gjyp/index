@@ -1993,28 +1993,17 @@ textarea.field-value {
 <div id="toast"></div>
 
 <script>
-console.log('[INDEX] Script starting...');
-
 // ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
-// Replace these with your Supabase project values
 const SUPABASE_URL = 'https://ogpfimmxqeqqeiiqvsqk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZpbW14cWVxcWVpaXF2c3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMjY4NDksImV4cCI6MjA4NzkwMjg0OX0.nVgt6O6Lz77T55b01JqhVXeAVhoxElQ5v3bn2ETRjk4';
 
-console.log('[INDEX] Creating Supabase client...');
-
-let supabaseClient;
-try {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  });
-  console.log('[INDEX] Supabase client created');
-} catch (err) {
-  console.error('[INDEX] Failed to create Supabase client:', err);
-}
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 // ─── SET SCHEMAS ─────────────────────────────────────────────────────────────
 
@@ -2215,25 +2204,17 @@ let selectedRelationshipContactId = null;
 
 async function loadFromSupabase() {
   try {
-    // Small delay to let Supabase auth fully initialize
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log('[INDEX] Fetching sets...');
-    
     const { data: sets, error: setsError } = await supabaseClient
       .from('sets')
       .select('*')
       .order('sort_order', { ascending: true });
     
-    console.log('[INDEX] Sets result:', sets?.length || 0, 'sets, error:', setsError);
     if (setsError) throw setsError;
     
-    console.log('[INDEX] Fetching items...');
     const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
     
-    console.log('[INDEX] Items result:', items?.length || 0, 'items, error:', itemsError);
     if (itemsError) throw itemsError;
     
     // Transform to local format
@@ -2256,17 +2237,13 @@ async function loadFromSupabase() {
         }))
     }));
     
-    console.log('[INDEX] Transformed', data.sets.length, 'sets');
-    
     if (data.sets.length) {
       // Restore activeSetId from localStorage, or default to first set
       const savedSetId = localStorage.getItem('index_activeSetId');
       if (savedSetId && data.sets.find(s => s.id === savedSetId)) {
         data.activeSetId = savedSetId;
-        console.log('[INDEX] Restored activeSetId from localStorage:', savedSetId);
       } else {
         data.activeSetId = data.sets[0].id;
-        console.log('[INDEX] Set activeSetId to first set:', data.activeSetId);
       }
     }
     
@@ -4362,13 +4339,16 @@ async function signOut() {
 }
 
 // Single auth listener - handles ALL auth events including INITIAL_SESSION
-let appInitializing = false; // Prevent concurrent initialization
+let appInitializing = false;
 
 function startApp() {
   if (appInitialized || appInitializing) return;
   appInitializing = true;
   showApp();
-  // Defer initApp to next tick to avoid Supabase internal blocking
+  // IMPORTANT: We use setTimeout to defer initApp to the next event loop tick.
+  // Calling Supabase queries directly inside onAuthStateChange causes a deadlock
+  // because the Supabase client is still processing the auth state internally.
+  // By deferring, we let the auth callback complete first, then make our queries.
   setTimeout(async () => {
     await initApp();
     appInitialized = true;
@@ -4377,8 +4357,6 @@ function startApp() {
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  console.log('[INDEX] Auth event:', event, 'session:', session ? 'exists' : 'null');
-  
   if (session) {
     startApp();
   } else {
@@ -4390,7 +4368,6 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 // Also check for existing session in case INITIAL_SESSION fired before listener was attached
 supabaseClient.auth.getSession().then(({ data: { session } }) => {
-  console.log('[INDEX] getSession check:', session ? 'exists' : 'null');
   if (session) {
     startApp();
   }
@@ -4399,12 +4376,8 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initApp() {
-  console.log('[INDEX] initApp starting...');
-  
   try {
-    console.log('[INDEX] Loading from Supabase...');
     await loadFromSupabase();
-    console.log('[INDEX] Loaded', data.sets.length, 'sets');
   } catch (err) {
     console.error('[INDEX] Failed to load data:', err);
   }
@@ -4421,13 +4394,10 @@ async function initApp() {
     console.error('[INDEX] Failed to check audit access:', err);
   }
   
-  console.log('[INDEX] Calling renderAll...');
   renderAll();
-  console.log('[INDEX] renderAll complete');
   setViewMode('table');
   checkCortexLink();
   setInterval(checkCortexLink, 5000);
-  console.log('[INDEX] initApp complete');
 }
 </script>
 </body>
