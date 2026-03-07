@@ -257,13 +257,13 @@ body {
 .audit-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
 }
 .audit-table th {
-  padding: 10px 12px;
+  padding: 6px 8px;
   text-align: left;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--ink-light);
@@ -273,7 +273,7 @@ body {
   top: 0;
 }
 .audit-table td {
-  padding: 10px 12px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--rule);
   vertical-align: top;
 }
@@ -282,36 +282,38 @@ body {
 }
 .audit-when {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink-light);
   white-space: nowrap;
 }
 .audit-who {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-mid);
-  max-width: 120px;
+  max-width: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .audit-contact {
   font-weight: 500;
+  font-size: 11px;
 }
 .audit-contact-set {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink-light);
 }
 .audit-field {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: var(--ink-mid);
 }
 .audit-value {
-  max-width: 150px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 10px;
 }
 .audit-value.old {
   color: var(--ink-light);
@@ -325,6 +327,69 @@ body {
   font-style: italic;
 }
 
+/* Panel Views (full card area) */
+.panel-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--white);
+}
+.panel-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink);
+}
+.panel-close {
+  font-size: 20px;
+  color: var(--ink-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+}
+.panel-close:hover {
+  color: var(--ink);
+}
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+.panel-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--rule);
+}
+.panel-hint {
+  font-size: 12px;
+  color: var(--ink-light);
+  margin-bottom: 16px;
+}
+.panel-section {
+  margin-bottom: 24px;
+}
+.panel-section-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--rule);
+}
+
 /* Shorthands */
 .shorthands-list {
   margin-bottom: 8px;
@@ -333,7 +398,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0;
   border-bottom: 1px solid var(--rule);
   font-size: 12px;
 }
@@ -366,6 +431,21 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+.shorthands-input {
+  flex: 2;
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  outline: none;
+}
+.shorthands-input.short {
+  flex: 1;
+}
+.shorthands-input:focus {
+  border-color: var(--ink-faint);
 }
 .shorthands-empty {
   font-size: 12px;
@@ -1640,6 +1720,63 @@ textarea.field-value {
     <!-- Card/Detail view -->
     <div id="detail-view"></div>
     
+    <!-- Audit Log Panel -->
+    <div class="panel-view" id="audit-panel" style="display: none;">
+      <div class="panel-header">
+        <div class="panel-title">Activity Log</div>
+        <button class="panel-close" onclick="closeAuditLog()">×</button>
+      </div>
+      <div class="panel-body">
+        <table class="audit-table" id="audit-table">
+          <thead>
+            <tr>
+              <th>Date/Time</th>
+              <th>Edited By</th>
+              <th>Contact</th>
+              <th>Field</th>
+              <th>Old</th>
+              <th>New</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body"></tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <button class="btn" id="audit-load-more" onclick="loadMoreAuditLogs()" style="display: none;">Load More</button>
+      </div>
+    </div>
+    
+    <!-- Shorthands Panel -->
+    <div class="panel-view" id="shorthands-panel" style="display: none;">
+      <div class="panel-header">
+        <div class="panel-title">Shorthands</div>
+        <button class="panel-close" onclick="closeShorthandsModal()">×</button>
+      </div>
+      <div class="panel-body">
+        <p class="panel-hint">Shorthands replace long names with abbreviations in compact displays.</p>
+        
+        <div class="panel-section">
+          <div class="panel-section-title">Institutions</div>
+          <div class="shorthands-list" id="shorthands-institutions"></div>
+          <div class="shorthands-add">
+            <input type="text" class="shorthands-input" id="new-shorthand-inst-full" placeholder="Full name (e.g., Massachusetts Institute of Technology)">
+            <input type="text" class="shorthands-input short" id="new-shorthand-inst-short" placeholder="Short (e.g., MIT)">
+            <button class="btn" onclick="addShorthand('institution')">Add</button>
+          </div>
+        </div>
+        
+        <div class="panel-section">
+          <div class="panel-section-title">Departments / Units</div>
+          <div class="shorthands-list" id="shorthands-departments"></div>
+          <div class="shorthands-add">
+            <input type="text" class="shorthands-input" id="new-shorthand-dept-full" placeholder="Full name (e.g., Department of Biology)">
+            <input type="text" class="shorthands-input short" id="new-shorthand-dept-short" placeholder="Short (e.g., Biology)">
+            <button class="btn" onclick="addShorthand('department')">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Table view -->
     <div id="table-view" class="visible">
       <div class="table-container">
@@ -1845,73 +1982,6 @@ textarea.field-value {
     <div class="modal-foot">
       <button class="btn" onclick="closeEditSetModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditSet()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- AUDIT LOG MODAL -->
-<div class="modal-overlay" id="audit-modal" onclick="if(event.target===this)closeAuditLog()">
-  <div class="modal" style="width: 700px; max-width: 90vw;">
-    <div class="modal-head">
-      <div class="modal-title">Activity Log</div>
-      <button class="modal-close" onclick="closeAuditLog()">×</button>
-    </div>
-    <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 0;">
-      <table class="audit-table" id="audit-table">
-        <thead>
-          <tr>
-            <th>Date/Time</th>
-            <th>Edited By</th>
-            <th>Contact</th>
-            <th>Field</th>
-            <th>Old Value</th>
-            <th>New Value</th>
-          </tr>
-        </thead>
-        <tbody id="audit-table-body">
-          <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--ink-faint);">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" id="audit-load-more" onclick="loadMoreAuditLogs()" style="display: none;">Load More</button>
-      <button class="btn btn-primary" onclick="closeAuditLog()">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- SHORTHANDS MODAL -->
-<div class="modal-overlay" id="shorthands-modal" onclick="if(event.target===this)closeShorthandsModal()">
-  <div class="modal" style="width: 560px;">
-    <div class="modal-head">
-      <div class="modal-title">Shorthands</div>
-      <button class="modal-close" onclick="closeShorthandsModal()">×</button>
-    </div>
-    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-      <p class="modal-hint" style="margin-bottom: 16px;">Shorthands replace long names with abbreviations in compact displays (sidebar, previews).</p>
-      
-      <div class="modal-field">
-        <label class="modal-label">Institutions</label>
-        <div class="shorthands-list" id="shorthands-institutions"></div>
-        <div class="shorthands-add">
-          <input type="text" class="modal-input" id="new-shorthand-inst-full" placeholder="Full name (e.g., Massachusetts Institute of Technology)" style="flex: 2;">
-          <input type="text" class="modal-input" id="new-shorthand-inst-short" placeholder="Short (e.g., MIT)" style="flex: 1;">
-          <button class="btn" onclick="addShorthand('institution')">Add</button>
-        </div>
-      </div>
-      
-      <div class="modal-field" style="margin-top: 20px;">
-        <label class="modal-label">Departments / Units</label>
-        <div class="shorthands-list" id="shorthands-departments"></div>
-        <div class="shorthands-add">
-          <input type="text" class="modal-input" id="new-shorthand-dept-full" placeholder="Full name (e.g., Department of Computer Science)" style="flex: 2;">
-          <input type="text" class="modal-input" id="new-shorthand-dept-short" placeholder="Short (e.g., CS)" style="flex: 1;">
-          <button class="btn" onclick="addShorthand('department')">Add</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-primary" onclick="closeShorthandsModal()">Done</button>
     </div>
   </div>
 </div>
@@ -3220,20 +3290,37 @@ function renderItemList() {
   
   container.innerHTML = filtered.map(item => {
     let metaHtml = '';
-    // For contacts schema, show title, department, institution on separate lines with shorthands
+    let avatarOutline = '';
+    
+    // For contacts schema, show title on line 1, institution | department on line 2
     if (set?.schema === 'contacts') {
       const title = item.title || '';
-      const dept = applyShorthand(item.department, 'department');
       const inst = applyShorthand(item.institution, 'institution');
-      const lines = [title, dept, inst].filter(Boolean);
-      metaHtml = lines.map(line => `<div class="list-meta-line">${escHtml(line)}</div>`).join('');
+      const dept = applyShorthand(item.department, 'department');
+      const affiliation = [inst, dept].filter(Boolean).join(' | ');
+      
+      if (title) metaHtml += `<div class="list-meta-line">${escHtml(title)}</div>`;
+      if (affiliation) metaHtml += `<div class="list-meta-line">${escHtml(affiliation)}</div>`;
+      
+      // Check if this contact has forward relationships (supports someone)
+      const links = item.links || [];
+      if (links.length > 0) {
+        // Get the color of the first person they support
+        const targetId = links[0].to_id;
+        const target = findContactById(targetId);
+        if (target) {
+          const targetSet = data.sets.find(s => s.id === target.setId);
+          const targetColor = target.avatar_color || targetSet?.color || AVATAR_COLORS[0];
+          avatarOutline = `; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px ${targetColor}`;
+        }
+      }
     } else {
       metaHtml = `<div class="list-meta-line">${escHtml(schema.listMeta(item))}</div>`;
     }
     
     return `
     <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
-      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
+      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}${avatarOutline}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="list-info">
         <div class="list-name">${escHtml(getDisplayName(item))}</div>
         <div class="list-meta">${metaHtml}</div>
@@ -3391,7 +3478,10 @@ function renderDetail() {
         if (field.type === 'textarea') {
           html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><textarea class="field-value" id="field-${field.key}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${escHtml(value)}</textarea>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
         } else {
-          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><input type="${field.type}" class="field-value" id="field-${field.key}" value="${escHtml(value)}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+          // Add datalist for institution and department fields
+          const listAttr = (field.key === 'institution') ? ' list="institution-options"' : 
+                          (field.key === 'department') ? ' list="department-options"' : '';
+          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><input type="${field.type}" class="field-value" id="field-${field.key}" value="${escHtml(value)}" placeholder="${escHtml(field.placeholder)}"${listAttr} onchange="saveField('${field.key}')">${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
         }
       } else {
         // Read-only mode
@@ -3407,6 +3497,10 @@ function renderDetail() {
     });
     html += `</div>`;
   });
+  
+  // Add datalists for autofill
+  html += `<datalist id="institution-options">${shorthands.institution.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
+  html += `<datalist id="department-options">${shorthands.department.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
   
   // Notes field with timestamp
   const notesTs = timestamps['notes'];
@@ -3526,12 +3620,27 @@ function applyShorthand(text, category) {
 }
 
 function openShorthandsModal() {
-  document.getElementById('shorthands-modal').classList.add('open');
+  // Hide other views, show shorthands panel
+  document.getElementById('detail-view').classList.remove('visible');
+  document.getElementById('table-view').classList.remove('visible');
+  document.getElementById('audit-panel').style.display = 'none';
+  document.getElementById('shorthands-panel').style.display = 'flex';
+  document.getElementById('empty-state').style.display = 'none';
   renderShorthands();
 }
 
 function closeShorthandsModal() {
-  document.getElementById('shorthands-modal').classList.remove('open');
+  document.getElementById('shorthands-panel').style.display = 'none';
+  // Restore appropriate view
+  if (viewMode === 'table') {
+    document.getElementById('table-view').classList.add('visible');
+  } else {
+    if (activeItemId) {
+      document.getElementById('detail-view').classList.add('visible');
+    } else {
+      document.getElementById('empty-state').style.display = 'flex';
+    }
+  }
 }
 
 function renderShorthands() {
@@ -3669,12 +3778,27 @@ async function openAuditLog() {
   if (!canViewAudit) return;
   
   auditLogOffset = 0;
-  document.getElementById('audit-modal').classList.add('open');
+  // Hide other views, show audit panel
+  document.getElementById('detail-view').classList.remove('visible');
+  document.getElementById('table-view').classList.remove('visible');
+  document.getElementById('shorthands-panel').style.display = 'none';
+  document.getElementById('audit-panel').style.display = 'flex';
+  document.getElementById('empty-state').style.display = 'none';
   await loadAuditLogs();
 }
 
 function closeAuditLog() {
-  document.getElementById('audit-modal').classList.remove('open');
+  document.getElementById('audit-panel').style.display = 'none';
+  // Restore appropriate view
+  if (viewMode === 'table') {
+    document.getElementById('table-view').classList.add('visible');
+  } else {
+    if (activeItemId) {
+      document.getElementById('detail-view').classList.add('visible');
+    } else {
+      document.getElementById('empty-state').style.display = 'flex';
+    }
+  }
 }
 
 async function loadAuditLogs() {
