@@ -2215,19 +2215,23 @@ async function save() {
 
 async function loadFromSupabase() {
   try {
+    console.log('[INDEX] Fetching sets...');
     // Load sets
     const { data: sets, error: setsError } = await supabaseClient
       .from('sets')
       .select('*')
       .order('sort_order', { ascending: true });
     
+    console.log('[INDEX] Sets result:', sets?.length || 0, 'sets, error:', setsError);
     if (setsError) throw setsError;
     
+    console.log('[INDEX] Fetching items...');
     // Load items
     const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
     
+    console.log('[INDEX] Items result:', items?.length || 0, 'items, error:', itemsError);
     if (itemsError) throw itemsError;
     
     // Transform to local format
@@ -2250,12 +2254,15 @@ async function loadFromSupabase() {
         }))
     }));
     
+    console.log('[INDEX] Transformed', data.sets.length, 'sets');
+    
     if (data.sets.length && !data.activeSetId) {
       data.activeSetId = data.sets[0].id;
+      console.log('[INDEX] Set activeSetId to', data.activeSetId);
     }
     
   } catch (err) {
-    console.error('Load error:', err);
+    console.error('[INDEX] Load error:', err);
     toast('Failed to load data');
   }
 }
