@@ -2215,26 +2215,17 @@ let selectedRelationshipContactId = null;
 
 async function loadFromSupabase() {
   try {
-    console.log('[INDEX] loadFromSupabase: checking session...');
-    // Ensure we have a valid session before querying
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    console.log('[INDEX] loadFromSupabase: session check complete:', session ? 'valid' : 'none');
-    if (!session) {
-      console.log('[INDEX] No session, skipping data load');
-      return;
-    }
+    console.log('[INDEX] Fetching sets...');
     
-    console.log('[INDEX] Fetching sets - about to call supabase...');
-    
-    const setsQuery = supabaseClient.from('sets').select('*').order('sort_order', { ascending: true });
-    console.log('[INDEX] Sets query object created');
-    
-    const { data: sets, error: setsError } = await setsQuery;
+    const { data: sets, error: setsError } = await supabaseClient
+      .from('sets')
+      .select('*')
+      .order('sort_order', { ascending: true });
     
     console.log('[INDEX] Sets result:', sets?.length || 0, 'sets, error:', setsError);
     if (setsError) throw setsError;
     
-    console.log('[INDEX] Fetching items - about to call supabase...');
+    console.log('[INDEX] Fetching items...');
     const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
