@@ -2215,16 +2215,26 @@ let selectedRelationshipContactId = null;
 
 async function loadFromSupabase() {
   try {
-    console.log('[INDEX] Fetching sets...');
-    const { data: sets, error: setsError } = await supabaseClient
-      .from('sets')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    console.log('[INDEX] loadFromSupabase: checking session...');
+    // Ensure we have a valid session before querying
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    console.log('[INDEX] loadFromSupabase: session check complete:', session ? 'valid' : 'none');
+    if (!session) {
+      console.log('[INDEX] No session, skipping data load');
+      return;
+    }
+    
+    console.log('[INDEX] Fetching sets - about to call supabase...');
+    
+    const setsQuery = supabaseClient.from('sets').select('*').order('sort_order', { ascending: true });
+    console.log('[INDEX] Sets query object created');
+    
+    const { data: sets, error: setsError } = await setsQuery;
     
     console.log('[INDEX] Sets result:', sets?.length || 0, 'sets, error:', setsError);
     if (setsError) throw setsError;
     
-    console.log('[INDEX] Fetching items...');
+    console.log('[INDEX] Fetching items - about to call supabase...');
     const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
@@ -4358,28 +4368,35 @@ async function signOut() {
 }
 
 // Single auth listener - handles ALL auth events including INITIAL_SESSION
+let appInitializing = false; // Prevent concurrent initialization
+
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
   console.log('[INDEX] Auth event:', event, 'session:', session ? 'exists' : 'null');
   
   if (session) {
-    if (!appInitialized) {
-      appInitialized = true;
+    if (!appInitialized && !appInitializing) {
+      appInitializing = true;
       showApp();
       await initApp();
+      appInitialized = true;
+      appInitializing = false;
     }
   } else {
     showLogin();
     appInitialized = false;
+    appInitializing = false;
   }
 });
 
 // Also check for existing session in case INITIAL_SESSION fired before listener was attached
-supabaseClient.auth.getSession().then(({ data: { session } }) => {
+supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
   console.log('[INDEX] getSession check:', session ? 'exists' : 'null');
-  if (session && !appInitialized) {
-    appInitialized = true;
+  if (session && !appInitialized && !appInitializing) {
+    appInitializing = true;
     showApp();
-    initApp();
+    await initApp();
+    appInitialized = true;
+    appInitializing = false;
   }
 });
 
