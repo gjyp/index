@@ -4349,7 +4349,10 @@ async function checkAuth() {
     if (session) {
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
-      await initApp();
+      if (!appInitialized) {
+        appInitialized = true;
+        await initApp();
+      }
     } else {
       document.getElementById('login-screen').classList.remove('hidden');
       document.getElementById('app').classList.add('hidden');
@@ -4365,8 +4368,12 @@ async function signOut() {
 }
 
 // Listen for auth changes (magic link callback)
+let appInitialized = false;
+
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session) {
+  console.log('[INDEX] Auth state change:', event);
+  if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session && !appInitialized) {
+    appInitialized = true;
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     await initApp();
@@ -4376,6 +4383,10 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initApp() {
+  if (appInitialized && data.sets.length > 0) {
+    console.log('[INDEX] initApp already completed, skipping');
+    return;
+  }
   console.log('[INDEX] initApp starting...');
   
   try {
