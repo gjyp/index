@@ -563,7 +563,7 @@ body {
   color: rgba(255,255,255,0.35);
   cursor: grab;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
-  border-left: 2px solid transparent;
+  border-left: 4px solid transparent;
   white-space: nowrap;
   user-select: none;
 }
@@ -3311,7 +3311,7 @@ function renderItemList() {
         if (target) {
           const targetSet = data.sets.find(s => s.id === target.setId);
           const targetColor = target.avatar_color || targetSet?.color || AVATAR_COLORS[0];
-          avatarOutline = `; box-shadow: 0 0 0 2px var(--white), 0 0 0 4px ${targetColor}`;
+          avatarOutline = `; box-shadow: 0 0 0 1px #5a5854, 0 0 0 5px ${targetColor}`;
         }
       }
     } else {
@@ -3586,15 +3586,19 @@ let shorthands = { institution: [], department: [] };
 
 async function loadShorthands() {
   try {
-    const { data, error } = await supabaseClient
+    const { data: rows, error } = await supabaseClient
       .from('shorthands')
       .select('*')
       .order('full_text', { ascending: true });
     
-    if (error) throw error;
+    if (error) {
+      // Table might not exist yet, just log and continue
+      console.log('[INDEX] Shorthands table not available:', error.message);
+      return;
+    }
     
     shorthands = { institution: [], department: [] };
-    (data || []).forEach(row => {
+    (rows || []).forEach(row => {
       if (row.category === 'institution' || row.category === 'department') {
         shorthands[row.category].push({
           id: row.id,
@@ -4346,9 +4350,24 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initApp() {
-  await loadFromSupabase();
-  await loadShorthands();
-  await checkAuditAccess();
+  try {
+    await loadFromSupabase();
+  } catch (err) {
+    console.error('[INDEX] Failed to load data:', err);
+  }
+  
+  try {
+    await loadShorthands();
+  } catch (err) {
+    console.error('[INDEX] Failed to load shorthands:', err);
+  }
+  
+  try {
+    await checkAuditAccess();
+  } catch (err) {
+    console.error('[INDEX] Failed to check audit access:', err);
+  }
+  
   renderAll();
   setViewMode('table');
   checkCortexLink();
