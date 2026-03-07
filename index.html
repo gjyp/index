@@ -325,6 +325,55 @@ body {
   font-style: italic;
 }
 
+/* Shorthands */
+.shorthands-list {
+  margin-bottom: 8px;
+}
+.shorthands-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 12px;
+}
+.shorthands-item:last-child {
+  border-bottom: none;
+}
+.shorthands-full {
+  flex: 2;
+  color: var(--ink);
+}
+.shorthands-arrow {
+  color: var(--ink-faint);
+  font-size: 10px;
+}
+.shorthands-short {
+  flex: 1;
+  font-weight: 500;
+  color: var(--ink);
+}
+.shorthands-remove {
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.shorthands-remove:hover {
+  color: var(--red);
+}
+.shorthands-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.shorthands-empty {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-style: italic;
+  padding: 8px 0;
+}
+
 /* Relationship Preview Popup */
 .relationship-preview {
   position: fixed;
@@ -498,8 +547,19 @@ body {
   font-size: 9px; 
   color: rgba(255,255,255,0.3); 
   letter-spacing: 1px; 
-  text-transform: uppercase; 
-  margin-top: 2px; 
+  text-transform: uppercase;
+}
+.sidebar-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+.sidebar-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.5px;
 }
 
 #sidebar-search {
@@ -598,11 +658,11 @@ body {
 }
 
 .list-item {
-  padding: 10px 14px;
+  padding: 8px 14px;
   cursor: pointer;
   display: flex; 
   align-items: center; 
-  gap: 10px;
+  gap: 8px;
   transition: background 0.1s;
   border-left: 2px solid transparent;
 }
@@ -625,22 +685,28 @@ body {
 .list-avatar.square { border-radius: 4px; }
 .list-info { flex: 1; min-width: 0; }
 .list-name {
-  font-size: 12px; 
+  font-size: 11px; 
   font-weight: 500; 
   color: rgba(255,255,255,0.85);
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis;
-  line-height: 1.3;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
 }
 .list-meta {
   font-family: var(--mono); 
-  font-size: 9px;
-  color: rgba(255,255,255,0.35); 
-  letter-spacing: 0.3px; 
-  margin-top: 2px;
+  font-size: 8px;
+  color: rgba(255,255,255,0.4); 
+  letter-spacing: 0px; 
+  line-height: 1.3;
   white-space: nowrap; 
   overflow: hidden; 
+  text-overflow: ellipsis;
+}
+.list-meta-line {
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -1514,7 +1580,10 @@ textarea.field-value {
   <div id="sidebar">
     <div id="sidebar-header">
       <div class="sidebar-title">Index</div>
-      <div class="sidebar-sub" id="sidebar-sub">Contacts</div>
+      <div class="sidebar-sub-row">
+        <span class="sidebar-sub" id="sidebar-sub">Contacts</span>
+        <span class="sidebar-count" id="sidebar-count">0</span>
+      </div>
     </div>
     
     <div id="sidebar-search">
@@ -1533,7 +1602,7 @@ textarea.field-value {
     <div id="item-list"></div>
     
     <div id="sidebar-footer">
-      <span class="footer-count"><span id="item-count">0</span> <span id="item-count-label">contacts</span></span>
+      <span class="footer-link" onclick="openShorthandsModal()">Shorthands</span>
       <span class="footer-link" id="audit-log-link" onclick="openAuditLog()" style="display: none;">Activity</span>
       <div class="cortex-link" onclick="signOut()" style="cursor: pointer;" title="Sign out">
         <span class="cortex-label">Sign Out</span>
@@ -1807,6 +1876,42 @@ textarea.field-value {
     <div class="modal-foot">
       <button class="btn" id="audit-load-more" onclick="loadMoreAuditLogs()" style="display: none;">Load More</button>
       <button class="btn btn-primary" onclick="closeAuditLog()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHORTHANDS MODAL -->
+<div class="modal-overlay" id="shorthands-modal" onclick="if(event.target===this)closeShorthandsModal()">
+  <div class="modal" style="width: 560px;">
+    <div class="modal-head">
+      <div class="modal-title">Shorthands</div>
+      <button class="modal-close" onclick="closeShorthandsModal()">×</button>
+    </div>
+    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+      <p class="modal-hint" style="margin-bottom: 16px;">Shorthands replace long names with abbreviations in compact displays (sidebar, previews).</p>
+      
+      <div class="modal-field">
+        <label class="modal-label">Institutions</label>
+        <div class="shorthands-list" id="shorthands-institutions"></div>
+        <div class="shorthands-add">
+          <input type="text" class="modal-input" id="new-shorthand-inst-full" placeholder="Full name (e.g., Massachusetts Institute of Technology)" style="flex: 2;">
+          <input type="text" class="modal-input" id="new-shorthand-inst-short" placeholder="Short (e.g., MIT)" style="flex: 1;">
+          <button class="btn" onclick="addShorthand('institution')">Add</button>
+        </div>
+      </div>
+      
+      <div class="modal-field" style="margin-top: 20px;">
+        <label class="modal-label">Departments / Units</label>
+        <div class="shorthands-list" id="shorthands-departments"></div>
+        <div class="shorthands-add">
+          <input type="text" class="modal-input" id="new-shorthand-dept-full" placeholder="Full name (e.g., Department of Computer Science)" style="flex: 2;">
+          <input type="text" class="modal-input" id="new-shorthand-dept-short" placeholder="Short (e.g., CS)" style="flex: 1;">
+          <button class="btn" onclick="addShorthand('department')">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeShorthandsModal()">Done</button>
     </div>
   </div>
 </div>
@@ -2595,7 +2700,7 @@ function renderRelationships() {
   forward.forEach(rel => {
     const target = rel.target;
     const displayName = getDisplayName(target);
-    const meta = target.title || target.institution || '';
+    const meta = target.title || applyShorthand(target.institution, 'institution') || '';
     html += `
       <div class="relationship-item" 
            onclick="navigateToContact('${target.id}', '${target.setId}')"
@@ -2613,7 +2718,7 @@ function renderRelationships() {
   reverse.forEach(rel => {
     const from = rel.from;
     const displayName = getDisplayName(from);
-    const meta = from.title || from.institution || '';
+    const meta = from.title || applyShorthand(from.institution, 'institution') || '';
     html += `
       <div class="relationship-item"
            onclick="navigateToContact('${from.id}', '${from.setId}')"
@@ -2774,6 +2879,8 @@ function showRelationshipPreview(event, contactId) {
   
   let html = `<div class="preview-name">${escHtml(displayName)}</div>`;
   if (contact.title) html += `<div class="preview-title">${escHtml(contact.title)}</div>`;
+  if (contact.department) html += `<div class="preview-field">${escHtml(applyShorthand(contact.department, 'department'))}</div>`;
+  if (contact.institution) html += `<div class="preview-field">${escHtml(applyShorthand(contact.institution, 'institution'))}</div>`;
   if (contact.email) html += `<div class="preview-field"><a href="mailto:${escHtml(contact.email)}">${escHtml(contact.email)}</a></div>`;
   if (contact.phone_office) html += `<div class="preview-field">Office: ${escHtml(contact.phone_office)}</div>`;
   if (contact.phone_cell) html += `<div class="preview-field">Cell: ${escHtml(contact.phone_cell)}</div>`;
@@ -3098,9 +3205,9 @@ function renderSidebar() {
   const set = getActiveSet();
   const schema = getSchema();
   document.getElementById('sidebar-sub').textContent = set ? set.name : '';
+  document.getElementById('sidebar-count').textContent = set ? set.items.length : '0';
   document.getElementById('btn-new-item').textContent = '+ New ' + schema.labelSingular;
   document.getElementById('search-input').placeholder = 'Search ' + schema.label.toLowerCase() + '…';
-  document.getElementById('item-count-label').textContent = schema.label.toLowerCase();
   document.getElementById('toolbar-title').textContent = set ? set.name : 'Index';
 }
 
@@ -3111,17 +3218,28 @@ function renderItemList() {
   const container = document.getElementById('item-list');
   const setColor = set?.color;
   
-  container.innerHTML = filtered.map(item => `
+  container.innerHTML = filtered.map(item => {
+    let metaHtml = '';
+    // For contacts schema, show title, department, institution on separate lines with shorthands
+    if (set?.schema === 'contacts') {
+      const title = item.title || '';
+      const dept = applyShorthand(item.department, 'department');
+      const inst = applyShorthand(item.institution, 'institution');
+      const lines = [title, dept, inst].filter(Boolean);
+      metaHtml = lines.map(line => `<div class="list-meta-line">${escHtml(line)}</div>`).join('');
+    } else {
+      metaHtml = `<div class="list-meta-line">${escHtml(schema.listMeta(item))}</div>`;
+    }
+    
+    return `
     <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
       <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="list-info">
         <div class="list-name">${escHtml(getDisplayName(item))}</div>
-        <div class="list-meta">${escHtml(schema.listMeta(item))}</div>
+        <div class="list-meta">${metaHtml}</div>
       </div>
     </div>
-  `).join('');
-  
-  document.getElementById('item-count').textContent = set ? set.items.length : 0;
+  `}).join('');
 }
 
 function renderTable() {
@@ -3185,9 +3303,13 @@ function renderTable() {
           }
         }
       } else {
-        const value = item[col] || '';
+        let value = item[col] || '';
+        // Apply shorthands for institution and department columns in display
+        if (!editMode && (col === 'institution' || col === 'department')) {
+          value = applyShorthand(value, col === 'institution' ? 'institution' : 'department');
+        }
         if (editMode) {
-          rowHtml += `<td><input class="cell-input" value="${escHtml(value)}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
+          rowHtml += `<td><input class="cell-input" value="${escHtml(item[col] || '')}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
         } else {
           if (value) {
             rowHtml += `<td><div class="cell-content"><span class="cell-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-timestamp">${tsDisplay}</span>` : ''}</div></td>`;
@@ -3233,12 +3355,18 @@ function renderDetail() {
   const setColor = set?.color;
   const timestamps = item._timestamps || {};
   
+  // Apply shorthands to subtitle for contacts
+  let subtitle = schema.subtitle(item);
+  if (set?.schema === 'contacts' && item.institution) {
+    subtitle = applyShorthand(item.institution, 'institution');
+  }
+  
   let html = `
     <div class="detail-header">
       <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="detail-title-block">
         <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
-        <div class="detail-subtitle" id="detail-subtitle">${escHtml(schema.subtitle(item))}</div>
+        <div class="detail-subtitle" id="detail-subtitle">${escHtml(subtitle)}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(schema.meta(item))}</div>
       </div>
       <div class="detail-actions" ${editMode ? '' : 'style="display:none"'}>
@@ -3357,6 +3485,142 @@ function openSetModal() {
   document.getElementById('new-set-name').focus(); 
 }
 function closeSetModal() { document.getElementById('set-modal').classList.remove('open'); }
+
+// ─── SHORTHANDS ─────────────────────────────────────────────────────────────
+
+let shorthands = { institution: [], department: [] };
+
+async function loadShorthands() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('shorthands')
+      .select('*')
+      .order('full_text', { ascending: true });
+    
+    if (error) throw error;
+    
+    shorthands = { institution: [], department: [] };
+    (data || []).forEach(row => {
+      if (row.category === 'institution' || row.category === 'department') {
+        shorthands[row.category].push({
+          id: row.id,
+          full: row.full_text,
+          short: row.short_text
+        });
+      }
+    });
+  } catch (err) {
+    console.error('Load shorthands error:', err);
+  }
+}
+
+function applyShorthand(text, category) {
+  if (!text) return '';
+  const list = shorthands[category] || [];
+  for (const sh of list) {
+    if (text.toLowerCase() === sh.full.toLowerCase()) {
+      return sh.short;
+    }
+  }
+  return text;
+}
+
+function openShorthandsModal() {
+  document.getElementById('shorthands-modal').classList.add('open');
+  renderShorthands();
+}
+
+function closeShorthandsModal() {
+  document.getElementById('shorthands-modal').classList.remove('open');
+}
+
+function renderShorthands() {
+  // Institutions
+  const instContainer = document.getElementById('shorthands-institutions');
+  if (shorthands.institution.length === 0) {
+    instContainer.innerHTML = '<div class="shorthands-empty">No institution shorthands</div>';
+  } else {
+    instContainer.innerHTML = shorthands.institution.map(sh => `
+      <div class="shorthands-item">
+        <span class="shorthands-full">${escHtml(sh.full)}</span>
+        <span class="shorthands-arrow">→</span>
+        <span class="shorthands-short">${escHtml(sh.short)}</span>
+        <span class="shorthands-remove" onclick="removeShorthand('${sh.id}')" title="Remove">×</span>
+      </div>
+    `).join('');
+  }
+  
+  // Departments
+  const deptContainer = document.getElementById('shorthands-departments');
+  if (shorthands.department.length === 0) {
+    deptContainer.innerHTML = '<div class="shorthands-empty">No department shorthands</div>';
+  } else {
+    deptContainer.innerHTML = shorthands.department.map(sh => `
+      <div class="shorthands-item">
+        <span class="shorthands-full">${escHtml(sh.full)}</span>
+        <span class="shorthands-arrow">→</span>
+        <span class="shorthands-short">${escHtml(sh.short)}</span>
+        <span class="shorthands-remove" onclick="removeShorthand('${sh.id}')" title="Remove">×</span>
+      </div>
+    `).join('');
+  }
+}
+
+async function addShorthand(category) {
+  const fullInput = document.getElementById(category === 'institution' ? 'new-shorthand-inst-full' : 'new-shorthand-dept-full');
+  const shortInput = document.getElementById(category === 'institution' ? 'new-shorthand-inst-short' : 'new-shorthand-dept-short');
+  
+  const fullText = fullInput.value.trim();
+  const shortText = shortInput.value.trim();
+  
+  if (!fullText || !shortText) {
+    toast('Both fields are required');
+    return;
+  }
+  
+  try {
+    const { error } = await supabaseClient
+      .from('shorthands')
+      .insert({
+        full_text: fullText,
+        short_text: shortText,
+        category: category
+      });
+    
+    if (error) throw error;
+    
+    fullInput.value = '';
+    shortInput.value = '';
+    await loadShorthands();
+    renderShorthands();
+    renderItemList(); // Refresh to apply new shorthand
+    toast('Shorthand added');
+  } catch (err) {
+    console.error('Add shorthand error:', err);
+    toast('Failed to add shorthand');
+  }
+}
+
+async function removeShorthand(id) {
+  if (!confirm('Remove this shorthand?')) return;
+  
+  try {
+    const { error } = await supabaseClient
+      .from('shorthands')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    await loadShorthands();
+    renderShorthands();
+    renderItemList();
+    toast('Shorthand removed');
+  } catch (err) {
+    console.error('Remove shorthand error:', err);
+    toast('Failed to remove shorthand');
+  }
+}
 
 // ─── AUDIT LOG ──────────────────────────────────────────────────────────────
 
@@ -3959,6 +4223,7 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 
 async function initApp() {
   await loadFromSupabase();
+  await loadShorthands();
   await checkAuditAccess();
   renderAll();
   setViewMode('table');
