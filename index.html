@@ -368,7 +368,7 @@ body {
 .set-tab.active {
   color: var(--paper);
   background: #5a5854;
-  border-left-color: var(--teal);
+  border-left-color: var(--teal); /* fallback, overridden by inline style */
 }
 .set-tab.dragging {
   opacity: 0.5;
@@ -2740,11 +2740,14 @@ function setSortColumn(col) {
 
 function renderSetTabs() {
   const container = document.getElementById('set-tabs');
-  let html = data.sets.map((set, index) => `
+  let html = data.sets.map((set, index) => {
+    const color = set.color || AVATAR_COLORS[0];
+    return `
     <div class="set-tab ${set.id === data.activeSetId ? 'active' : ''}" 
          data-set-id="${set.id}"
          data-index="${index}"
          draggable="true"
+         style="${set.id === data.activeSetId ? `border-left-color: ${color}` : ''}"
          onclick="switchSet('${set.id}')"
          oncontextmenu="showSetContextMenu(event, '${set.id}')"
          ondragstart="onSetDragStart(event)"
@@ -2754,7 +2757,7 @@ function renderSetTabs() {
          ondragend="onSetDragEnd(event)">
       ${escHtml(set.name)}
     </div>
-  `).join('');
+  `}).join('');
   html += `<div class="set-tab-spacer"></div>`;
   html += `<div class="set-tab set-tab-add" onclick="openSetModal()">+</div>`;
   container.innerHTML = html;
