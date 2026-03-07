@@ -2198,7 +2198,6 @@ const RELATIONSHIP_TYPES = {
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = ['#b03020','#203070','#306030','#603070','#b07020','#207060','#702040','#204060'];
-const STORAGE_KEY = 'index_data';
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 
@@ -2213,11 +2212,6 @@ let sortAsc = true;
 let selectedRelationshipContactId = null;
 
 // ─── PERSISTENCE (SUPABASE) ──────────────────────────────────────────────────
-
-async function save() {
-  // Individual saves happen in specific functions
-  // This is kept for compatibility but does nothing with Supabase
-}
 
 async function loadFromSupabase() {
   try {
@@ -2260,20 +2254,22 @@ async function loadFromSupabase() {
     
     console.log('[INDEX] Transformed', data.sets.length, 'sets');
     
-    if (data.sets.length && !data.activeSetId) {
-      data.activeSetId = data.sets[0].id;
-      console.log('[INDEX] Set activeSetId to', data.activeSetId);
+    if (data.sets.length) {
+      // Restore activeSetId from localStorage, or default to first set
+      const savedSetId = localStorage.getItem('index_activeSetId');
+      if (savedSetId && data.sets.find(s => s.id === savedSetId)) {
+        data.activeSetId = savedSetId;
+        console.log('[INDEX] Restored activeSetId from localStorage:', savedSetId);
+      } else {
+        data.activeSetId = data.sets[0].id;
+        console.log('[INDEX] Set activeSetId to first set:', data.activeSetId);
+      }
     }
     
   } catch (err) {
     console.error('[INDEX] Load error:', err);
     toast('Failed to load data');
   }
-}
-
-function load() {
-  // Sync wrapper for initial load - actual loading happens after auth
-  data = { sets: [], activeSetId: null };
 }
 
 async function saveSet(set) {
@@ -2474,11 +2470,11 @@ function getSchema() {
 
 function switchSet(setId) {
   data.activeSetId = setId;
+  localStorage.setItem('index_activeSetId', setId);
   activeItemId = null;
   activeTagFilter = null;
   searchQuery = '';
   document.getElementById('search-input').value = '';
-  save();
   renderAll();
 }
 
@@ -2536,14 +2532,14 @@ async function createItem() {
   toast(schema.labelSingular + ' created');
 }
 
-function duplicateItem(itemId) {
+async function duplicateItem(itemId) {
   const set = getActiveSet();
   const item = getItem(itemId || activeItemId);
   if (!set || !item) return;
   const schema = getSchema();
-  const dupe = { ...JSON.parse(JSON.stringify(item)), id: uid(), name: item.name + ' (copy)' };
+  const dupe = { ...JSON.parse(JSON.stringify(item)), id: uid(), name: item.name + ' (copy)', _timestamps: {} };
   set.items.push(dupe);
-  save();
+  await saveItem(dupe, set.id);
   renderAll();
   toast(schema.labelSingular + ' duplicated');
 }
@@ -4374,6 +4370,16 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
   } else {
     showLogin();
     appInitialized = false;
+  }
+});
+
+// Also check for existing session in case INITIAL_SESSION fired before listener was attached
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+  console.log('[INDEX] getSession check:', session ? 'exists' : 'null');
+  if (session && !appInitialized) {
+    appInitialized = true;
+    showApp();
+    initApp();
   }
 });
 
