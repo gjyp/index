@@ -124,6 +124,160 @@ body {
   background: var(--paper-dark);
   color: var(--ink);
 }
+
+/* ── RELATIONSHIPS ────────────────────────── */
+.relationships-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.relationship-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--paper);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.relationship-item:hover {
+  background: var(--paper-dark);
+}
+.relationship-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  min-width: 100px;
+}
+.relationship-name {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.relationship-meta {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-left: auto;
+}
+.relationship-remove {
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  margin-left: 8px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.relationship-item:hover .relationship-remove {
+  opacity: 1;
+}
+.relationship-remove:hover {
+  color: var(--red);
+}
+.relationship-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-light);
+  background: none;
+  border: 1px dashed var(--rule);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.relationship-add-btn:hover {
+  border-color: var(--ink-light);
+  color: var(--ink);
+}
+.relationships-empty {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* Relationship Preview Popup */
+.relationship-preview {
+  position: fixed;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+  padding: 14px 16px;
+  min-width: 240px;
+  max-width: 300px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.relationship-preview.visible {
+  opacity: 1;
+}
+.preview-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.preview-title {
+  font-size: 12px;
+  color: var(--ink-mid);
+  margin-bottom: 8px;
+}
+.preview-field {
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-bottom: 2px;
+}
+.preview-field a {
+  color: var(--teal);
+  text-decoration: none;
+}
+
+/* Relationship Modal */
+.relationship-search {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 13px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  outline: none;
+  margin-bottom: 8px;
+}
+.relationship-search:focus {
+  border-color: var(--ink-faint);
+}
+.relationship-results {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  background: var(--white);
+}
+.relationship-result {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.1s;
+}
+.relationship-result:last-child {
+  border-bottom: none;
+}
+.relationship-result:hover {
+  background: var(--paper);
+}
+.relationship-result.selected {
+  background: var(--paper-dark);
+}
+.relationship-result-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+.relationship-result-meta {
+  font-size: 11px;
+  color: var(--ink-light);
+}
 #app.hidden { display: none; }
 
 /* ── APP SHELL ─────────────────────────────── */
@@ -1400,6 +1554,39 @@ textarea.field-value {
   </div>
 </div>
 
+<!-- RELATIONSHIP MODAL -->
+<div class="modal-overlay" id="relationship-modal" onclick="if(event.target===this)closeRelationshipModal()">
+  <div class="modal" style="width: 440px;">
+    <div class="modal-head">
+      <div class="modal-title">Add Relationship</div>
+      <button class="modal-close" onclick="closeRelationshipModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Relationship Type</label>
+        <select class="modal-select" id="relationship-type">
+          <option value="assistant_to">Assistant to</option>
+          <option value="lab_manager_for">Lab Manager for</option>
+          <option value="reports_to">Reports to</option>
+          <option value="grant_manager_for">Grant Manager for</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Select Contact</label>
+        <input type="text" class="relationship-search" id="relationship-search" placeholder="Search by name..." oninput="filterRelationshipResults()">
+        <div class="relationship-results" id="relationship-results"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeRelationshipModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRelationship()">Add Relationship</button>
+    </div>
+  </div>
+</div>
+
+<!-- RELATIONSHIP PREVIEW POPUP -->
+<div class="relationship-preview" id="relationship-preview"></div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -1419,7 +1606,7 @@ const SCHEMAS = {
     labelSingular: 'Contact',
     icon: '●',
     avatarStyle: 'circle',
-    tableColumns: ['last_name', 'first_name', 'organization', 'role', 'email', 'phone', 'office'],
+    tableColumns: ['last_name', 'first_name', 'institution', 'department', 'title', 'email', 'phone_office', 'phone_cell', 'office_location'],
     fields: [
       { group: 'Name', fields: [
         { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'First name' },
@@ -1427,25 +1614,26 @@ const SCHEMAS = {
       ]},
       { group: 'Contact Information', fields: [
         { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
-        { key: 'phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
-        { key: 'mobile', label: 'Mobile', type: 'tel', placeholder: '+1 555 987 6543' },
+        { key: 'phone_office', label: 'Office Phone', type: 'tel', placeholder: '+1 555 123 4567' },
+        { key: 'phone_cell', label: 'Cell Phone', type: 'tel', placeholder: '+1 555 987 6543' },
       ]},
       { group: 'Location', fields: [
-        { key: 'office', label: 'Office', type: 'text', placeholder: 'Building, Floor, Room' },
+        { key: 'office_location', label: 'Office Location', type: 'text', placeholder: 'Building, Floor, Room' },
         { key: 'address', label: 'Address', type: 'text', placeholder: 'Street address, City' },
       ]},
-      { group: 'Organization', fields: [
-        { key: 'organization', label: 'Company', type: 'text', placeholder: 'Company or organization' },
-        { key: 'role', label: 'Role', type: 'text', placeholder: 'Job title or role' },
+      { group: 'Institution', fields: [
+        { key: 'institution', label: 'Institution', type: 'text', placeholder: 'University or organization' },
+        { key: 'department', label: 'Department/Unit', type: 'text', placeholder: 'Department or unit' },
+        { key: 'title', label: 'Title', type: 'text', placeholder: 'Job title' },
       ]},
       { group: 'Appearance', fields: [
         { key: 'avatar_color', label: 'Avatar Color', type: 'color', placeholder: '' },
       ]},
     ],
-    subtitle: item => item.organization || '',
-    meta: item => item.role || '',
-    listMeta: item => item.organization || item.role || '',
-    quickFields: ['first_name', 'last_name', 'organization', 'email'],
+    subtitle: item => item.institution || '',
+    meta: item => item.title || '',
+    listMeta: item => item.institution || item.department || item.title || '',
+    quickFields: ['first_name', 'last_name', 'institution', 'email'],
     suggestedTags: ['client', 'collaborator', 'vendor', 'speaker', 'press', 'team', 'vip'],
   },
   
@@ -1548,12 +1736,18 @@ const COLUMN_LABELS = {
   name: 'Name',
   first_name: 'First',
   last_name: 'Last',
+  institution: 'Institution',
+  department: 'Dept/Unit',
   organization: 'Organization',
+  title: 'Title',
   role: 'Role',
   email: 'Email',
   phone: 'Phone',
+  phone_office: 'Office Phone',
+  phone_cell: 'Cell Phone',
   mobile: 'Mobile',
   office: 'Office',
+  office_location: 'Office Location',
   address: 'Address',
   neighborhood: 'Neighborhood',
   capacity_seated: 'Seated',
@@ -1575,6 +1769,14 @@ const COLUMN_LABELS = {
   avatar_color: 'Color',
 };
 
+// Relationship types - forward and reverse labels
+const RELATIONSHIP_TYPES = {
+  assistant_to: { forward: 'Assistant to', reverse: 'Admin Assistant' },
+  lab_manager_for: { forward: 'Lab Manager for', reverse: 'Lab Manager' },
+  reports_to: { forward: 'Reports to', reverse: 'Supervisor of' },
+  grant_manager_for: { forward: 'Grant Manager for', reverse: 'Grant Manager' },
+};
+
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = ['#b03020','#203070','#306030','#603070','#b07020','#207060','#702040','#204060'];
@@ -1590,6 +1792,7 @@ let viewMode = 'table'; // 'card' or 'table'
 let editMode = false;
 let sortColumn = 'last_name';
 let sortAsc = true;
+let selectedRelationshipContactId = null;
 
 // ─── PERSISTENCE (SUPABASE) ──────────────────────────────────────────────────
 
@@ -2038,6 +2241,275 @@ function removeAlias(index) {
   renderAliases();
 }
 
+// ─── RELATIONSHIPS ──────────────────────────────────────────────────────────
+
+function getAllContacts() {
+  // Get all contacts across all sets
+  const contacts = [];
+  data.sets.forEach(set => {
+    if (set.schema === 'contacts') {
+      set.items.forEach(item => {
+        contacts.push({
+          ...item,
+          setId: set.id,
+          setName: set.name
+        });
+      });
+    }
+  });
+  return contacts;
+}
+
+function findContactById(contactId) {
+  for (const set of data.sets) {
+    const item = set.items.find(i => i.id === contactId);
+    if (item) return { ...item, setId: set.id, setName: set.name };
+  }
+  return null;
+}
+
+function getForwardRelationships(item) {
+  // Relationships stored on this item (this person links TO someone)
+  return (item.links || []).map(link => {
+    const target = findContactById(link.to_id);
+    return {
+      ...link,
+      target,
+      label: RELATIONSHIP_TYPES[link.relationship]?.forward || link.relationship
+    };
+  }).filter(r => r.target); // Only include if target still exists
+}
+
+function getReverseRelationships(itemId) {
+  // Find all contacts that link TO this item
+  const reverse = [];
+  data.sets.forEach(set => {
+    if (set.schema === 'contacts') {
+      set.items.forEach(item => {
+        (item.links || []).forEach(link => {
+          if (link.to_id === itemId) {
+            reverse.push({
+              from: { ...item, setId: set.id, setName: set.name },
+              relationship: link.relationship,
+              label: RELATIONSHIP_TYPES[link.relationship]?.reverse || link.relationship
+            });
+          }
+        });
+      });
+    }
+  });
+  return reverse;
+}
+
+function renderRelationships() {
+  const item = getItem(activeItemId);
+  const container = document.getElementById('relationships-section');
+  if (!item || !container) return;
+  
+  const forward = getForwardRelationships(item);
+  const reverse = getReverseRelationships(item.id);
+  
+  let html = '';
+  
+  // Forward relationships (stored on this contact)
+  forward.forEach(rel => {
+    const target = rel.target;
+    const displayName = getDisplayName(target);
+    const meta = target.title || target.institution || '';
+    html += `
+      <div class="relationship-item" 
+           onclick="navigateToContact('${target.id}', '${target.setId}')"
+           onmouseenter="showRelationshipPreview(event, '${target.id}')"
+           onmouseleave="hideRelationshipPreview()">
+        <span class="relationship-label">${escHtml(rel.label)}:</span>
+        <span class="relationship-name">${escHtml(displayName)}</span>
+        <span class="relationship-meta">${escHtml(meta)}</span>
+        <span class="relationship-remove" onclick="event.stopPropagation(); removeRelationship('${rel.to_id}')" title="Remove relationship">×</span>
+      </div>
+    `;
+  });
+  
+  // Reverse relationships (others linking to this contact)
+  reverse.forEach(rel => {
+    const from = rel.from;
+    const displayName = getDisplayName(from);
+    const meta = from.title || from.institution || '';
+    html += `
+      <div class="relationship-item"
+           onclick="navigateToContact('${from.id}', '${from.setId}')"
+           onmouseenter="showRelationshipPreview(event, '${from.id}')"
+           onmouseleave="hideRelationshipPreview()">
+        <span class="relationship-label">${escHtml(rel.label)}:</span>
+        <span class="relationship-name">${escHtml(displayName)}</span>
+        <span class="relationship-meta">${escHtml(meta)}</span>
+      </div>
+    `;
+  });
+  
+  // Add relationship button (only show if this is likely a "support" contact)
+  html += `<button class="relationship-add-btn" onclick="openRelationshipModal()">+ Add Relationship</button>`;
+  
+  if (forward.length === 0 && reverse.length === 0) {
+    html = `<div class="relationships-empty">No relationships</div>` + html;
+  }
+  
+  container.innerHTML = html;
+}
+
+function openRelationshipModal() {
+  selectedRelationshipContactId = null;
+  document.getElementById('relationship-search').value = '';
+  document.getElementById('relationship-type').value = 'assistant_to';
+  renderRelationshipResults();
+  document.getElementById('relationship-modal').classList.add('open');
+  document.getElementById('relationship-search').focus();
+}
+
+function closeRelationshipModal() {
+  document.getElementById('relationship-modal').classList.remove('open');
+}
+
+function renderRelationshipResults() {
+  const currentItem = getItem(activeItemId);
+  const contacts = getAllContacts().filter(c => c.id !== activeItemId); // Exclude self
+  const container = document.getElementById('relationship-results');
+  
+  container.innerHTML = contacts.map(contact => {
+    const displayName = getDisplayName(contact);
+    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join(' · ');
+    const isSelected = contact.id === selectedRelationshipContactId;
+    return `
+      <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
+        <div class="relationship-result-name">${escHtml(displayName)}</div>
+        <div class="relationship-result-meta">${escHtml(meta)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterRelationshipResults() {
+  const query = document.getElementById('relationship-search').value.toLowerCase().trim();
+  const currentItem = getItem(activeItemId);
+  let contacts = getAllContacts().filter(c => c.id !== activeItemId);
+  
+  if (query) {
+    contacts = contacts.filter(c => {
+      const name = getDisplayName(c).toLowerCase();
+      const institution = (c.institution || '').toLowerCase();
+      const title = (c.title || '').toLowerCase();
+      return name.includes(query) || institution.includes(query) || title.includes(query);
+    });
+  }
+  
+  const container = document.getElementById('relationship-results');
+  
+  if (contacts.length === 0) {
+    container.innerHTML = '<div class="relationship-result"><div class="relationship-result-name">No contacts found</div></div>';
+    return;
+  }
+  
+  container.innerHTML = contacts.map(contact => {
+    const displayName = getDisplayName(contact);
+    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join(' · ');
+    const isSelected = contact.id === selectedRelationshipContactId;
+    return `
+      <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
+        <div class="relationship-result-name">${escHtml(displayName)}</div>
+        <div class="relationship-result-meta">${escHtml(meta)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectRelationshipContact(contactId) {
+  selectedRelationshipContactId = contactId;
+  filterRelationshipResults(); // Re-render to show selection
+}
+
+async function saveRelationship() {
+  if (!selectedRelationshipContactId) {
+    toast('Please select a contact');
+    return;
+  }
+  
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  const relationshipType = document.getElementById('relationship-type').value;
+  
+  // Initialize links array if needed
+  if (!item.links) item.links = [];
+  
+  // Check if relationship already exists
+  const exists = item.links.some(l => l.to_id === selectedRelationshipContactId && l.relationship === relationshipType);
+  if (exists) {
+    toast('Relationship already exists');
+    return;
+  }
+  
+  // Add the relationship
+  item.links.push({
+    to_id: selectedRelationshipContactId,
+    relationship: relationshipType
+  });
+  
+  await saveItem(item, set.id);
+  closeRelationshipModal();
+  renderRelationships();
+  toast('Relationship added');
+}
+
+async function removeRelationship(targetId) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set || !item.links) return;
+  
+  if (!confirm('Remove this relationship?')) return;
+  
+  item.links = item.links.filter(l => l.to_id !== targetId);
+  await saveItem(item, set.id);
+  renderRelationships();
+  toast('Relationship removed');
+}
+
+function navigateToContact(contactId, setId) {
+  // Switch to the target set and select the contact
+  if (data.activeSetId !== setId) {
+    data.activeSetId = setId;
+  }
+  activeItemId = contactId;
+  setViewMode('card');
+  renderAll();
+}
+
+function showRelationshipPreview(event, contactId) {
+  const contact = findContactById(contactId);
+  if (!contact) return;
+  
+  const preview = document.getElementById('relationship-preview');
+  const displayName = getDisplayName(contact);
+  
+  let html = `<div class="preview-name">${escHtml(displayName)}</div>`;
+  if (contact.title) html += `<div class="preview-title">${escHtml(contact.title)}</div>`;
+  if (contact.email) html += `<div class="preview-field"><a href="mailto:${escHtml(contact.email)}">${escHtml(contact.email)}</a></div>`;
+  if (contact.phone_office) html += `<div class="preview-field">Office: ${escHtml(contact.phone_office)}</div>`;
+  if (contact.phone_cell) html += `<div class="preview-field">Cell: ${escHtml(contact.phone_cell)}</div>`;
+  if (contact.office_location) html += `<div class="preview-field">${escHtml(contact.office_location)}</div>`;
+  
+  preview.innerHTML = html;
+  
+  // Position near the mouse
+  const rect = event.target.getBoundingClientRect();
+  preview.style.left = (rect.right + 10) + 'px';
+  preview.style.top = rect.top + 'px';
+  preview.classList.add('visible');
+}
+
+function hideRelationshipPreview() {
+  document.getElementById('relationship-preview').classList.remove('visible');
+}
+
 // ─── TAGS ────────────────────────────────────────────────────────────────────
 
 function getAllTags() {
@@ -2446,6 +2918,9 @@ function renderDetail() {
   const notesTs = timestamps['notes'];
   const notesTsDisplay = (item.notes && notesTs) ? formatTimestamp(notesTs) : '';
   
+  // Relationships section
+  html += `<div class="field-group"><div class="field-group-title">Relationships</div><div class="relationships-section" id="relationships-section"></div></div>`;
+  
   html += `<div class="field-group"><div class="field-group-title">Aliases (for name matching)</div><div class="field-row"><div class="field-label">Names</div><div class="aliases-list" id="aliases-list"></div></div></div>`;
   html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="field-row"><div class="field-label">Tags</div><div class="tags-container" id="tags-container"></div></div></div>`;
   html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><textarea class="field-value" id="field-notes" placeholder="Additional notes…" onchange="saveField('notes')">${escHtml(item.notes || '')}</textarea>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
@@ -2454,6 +2929,7 @@ function renderDetail() {
   detail.innerHTML = html;
   renderAliases();
   renderTags();
+  renderRelationships();
 }
 
 function updateDetailHeader() {
