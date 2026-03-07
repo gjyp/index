@@ -2571,6 +2571,24 @@ function renderRelationships() {
   const forward = getForwardRelationships(item);
   const reverse = getReverseRelationships(item.id);
   
+  // Relationship type display order
+  const typeOrder = ['assistant_to', 'lab_manager_for', 'grant_manager_for', 'reports_to'];
+  
+  // Sort function: by type order, then by last name
+  const sortRels = (a, b) => {
+    const aTypeIndex = typeOrder.indexOf(a.relationship);
+    const bTypeIndex = typeOrder.indexOf(b.relationship);
+    if (aTypeIndex !== bTypeIndex) return aTypeIndex - bTypeIndex;
+    // Same type, sort by last name
+    const aName = (a.target?.last_name || a.from?.last_name || '').toLowerCase();
+    const bName = (b.target?.last_name || b.from?.last_name || '').toLowerCase();
+    return aName.localeCompare(bName);
+  };
+  
+  // Sort both arrays
+  forward.sort(sortRels);
+  reverse.sort(sortRels);
+  
   let html = '';
   
   // Forward relationships (stored on this contact)
