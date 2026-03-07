@@ -2215,6 +2215,9 @@ let selectedRelationshipContactId = null;
 
 async function loadFromSupabase() {
   try {
+    // Small delay to let Supabase auth fully initialize
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     console.log('[INDEX] Fetching sets...');
     
     const { data: sets, error: setsError } = await supabaseClient
