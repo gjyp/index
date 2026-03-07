@@ -1419,8 +1419,12 @@ const SCHEMAS = {
     labelSingular: 'Contact',
     icon: '●',
     avatarStyle: 'circle',
-    tableColumns: ['name', 'organization', 'role', 'email', 'phone', 'office'],
+    tableColumns: ['last_name', 'first_name', 'organization', 'role', 'email', 'phone', 'office'],
     fields: [
+      { group: 'Name', fields: [
+        { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'First name' },
+        { key: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Last name' },
+      ]},
       { group: 'Contact Information', fields: [
         { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
         { key: 'phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
@@ -1434,11 +1438,14 @@ const SCHEMAS = {
         { key: 'organization', label: 'Company', type: 'text', placeholder: 'Company or organization' },
         { key: 'role', label: 'Role', type: 'text', placeholder: 'Job title or role' },
       ]},
+      { group: 'Appearance', fields: [
+        { key: 'avatar_color', label: 'Avatar Color', type: 'color', placeholder: '' },
+      ]},
     ],
     subtitle: item => item.organization || '',
     meta: item => item.role || '',
     listMeta: item => item.organization || item.role || '',
-    quickFields: ['name', 'organization', 'email'],
+    quickFields: ['first_name', 'last_name', 'organization', 'email'],
     suggestedTags: ['client', 'collaborator', 'vendor', 'speaker', 'press', 'team', 'vip'],
   },
   
@@ -1539,6 +1546,8 @@ const SCHEMAS = {
 // Column display labels
 const COLUMN_LABELS = {
   name: 'Name',
+  first_name: 'First',
+  last_name: 'Last',
   organization: 'Organization',
   role: 'Role',
   email: 'Email',
@@ -1563,6 +1572,7 @@ const COLUMN_LABELS = {
   service_area: 'Service Area',
   description: 'Description',
   tags: 'Tags',
+  avatar_color: 'Color',
 };
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
@@ -1578,7 +1588,7 @@ let activeTagFilter = null;
 let searchQuery = '';
 let viewMode = 'table'; // 'card' or 'table'
 let editMode = false;
-let sortColumn = 'name';
+let sortColumn = 'last_name';
 let sortAsc = true;
 
 // ─── PERSISTENCE (SUPABASE) ──────────────────────────────────────────────────
@@ -1591,7 +1601,7 @@ async function save() {
 async function loadFromSupabase() {
   try {
     // Load sets
-    const { data: sets, error: setsError } = await supabase
+    const { data: sets, error: setsError } = await supabaseClientClient
       .from('sets')
       .select('*')
       .order('sort_order', { ascending: true });
@@ -1599,7 +1609,7 @@ async function loadFromSupabase() {
     if (setsError) throw setsError;
     
     // Load items
-    const { data: items, error: itemsError } = await supabase
+    const { data: items, error: itemsError } = await supabaseClientClient
       .from('items')
       .select('*');
     
@@ -1641,7 +1651,7 @@ function load() {
 
 async function saveSet(set) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClientClient
       .from('sets')
       .upsert({
         id: set.id,
@@ -1659,7 +1669,7 @@ async function saveSet(set) {
 
 async function deleteSetFromDB(setId) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClientClient
       .from('sets')
       .delete()
       .eq('id', setId);
@@ -1675,7 +1685,7 @@ async function saveItem(item, setId) {
     // Extract known fields and put rest in data JSONB
     const { id, name, aliases, tags, notes, _timestamps, ...rest } = item;
     
-    const { error } = await supabase
+    const { error } = await supabaseClientClient
       .from('items')
       .upsert({
         id: id,
@@ -1696,7 +1706,7 @@ async function saveItem(item, setId) {
 
 async function deleteItemFromDB(itemId) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClientClient
       .from('items')
       .delete()
       .eq('id', itemId);
@@ -1741,14 +1751,32 @@ function getSeedData() {
 
 function uid() { return Math.random().toString(36).slice(2, 11); }
 
-function getInitials(name) {
+function getInitials(name, firstName, lastName) {
+  // If first/last name provided, use those
+  if (firstName && lastName) {
+    return (firstName[0] + lastName[0]).toUpperCase();
+  }
+  if (firstName) return firstName[0].toUpperCase();
+  if (lastName) return lastName[0].toUpperCase();
+  
+  // Fall back to parsing name
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function getAvatarColor(name) {
+function getDisplayName(item) {
+  if (item.first_name && item.last_name) {
+    return `${item.first_name} ${item.last_name}`;
+  }
+  if (item.first_name) return item.first_name;
+  if (item.last_name) return item.last_name;
+  return item.name || 'Unnamed';
+}
+
+function getAvatarColor(name, customColor) {
+  if (customColor) return customColor;
   if (!name) return AVATAR_COLORS[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -1832,16 +1860,26 @@ async function createItem() {
   const set = getActiveSet();
   if (!set) return;
   const schema = getSchema();
-  const nameInput = document.getElementById('new-item-name');
-  const name = nameInput ? nameInput.value.trim() : '';
-  if (!name) { toast('Name is required'); return; }
   
-  const item = { id: crypto.randomUUID(), name, aliases: [], tags: [], notes: '', _timestamps: {} };
+  // Collect all quick field values first
+  const item = { id: crypto.randomUUID(), aliases: [], tags: [], notes: '', _timestamps: {} };
   schema.quickFields.forEach(key => {
-    if (key === 'name') return;
     const input = document.getElementById('new-item-' + key);
     if (input) item[key] = input.value.trim();
   });
+  
+  // Build name from first_name + last_name if those exist, otherwise use name field
+  if (item.first_name || item.last_name) {
+    item.name = [item.first_name, item.last_name].filter(Boolean).join(' ');
+  } else {
+    const nameInput = document.getElementById('new-item-name');
+    item.name = nameInput ? nameInput.value.trim() : '';
+  }
+  
+  if (!item.name && !item.first_name && !item.last_name) { 
+    toast('Name is required'); 
+    return; 
+  }
   
   set.items.push(item);
   await saveItem(item, set.id);
@@ -2256,9 +2294,9 @@ function renderItemList() {
   
   container.innerHTML = filtered.map(item => `
     <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
-      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div>
+      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="list-info">
-        <div class="list-name">${escHtml(item.name)}</div>
+        <div class="list-name">${escHtml(getDisplayName(item))}</div>
         <div class="list-meta">${escHtml(schema.listMeta(item))}</div>
       </div>
     </div>
@@ -2301,12 +2339,29 @@ function renderTable() {
       const ts = timestamps[col];
       const tsDisplay = ts ? formatTimestamp(ts) : '';
       
-      if (col === 'name') {
-        // Special name column with avatar
-        if (editMode) {
-          rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div><input class="cell-name-input" value="${escHtml(item.name)}" onchange="saveTableCell('${item.id}', 'name', this.value)" onblur="renderTable()"></div></td>`;
+      if (col === 'name' || col === 'first_name' || col === 'last_name') {
+        // Name columns with avatar for first column only
+        const isFirstCol = columns.indexOf(col) === 0;
+        const value = item[col] || '';
+        
+        if (isFirstCol) {
+          // First column gets avatar
+          if (editMode) {
+            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div><input class="cell-name-input" value="${escHtml(value)}" onchange="saveTableCell('${item.id}', '${col}', this.value)" onblur="renderTable()"></div></td>`;
+          } else {
+            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div><div class="cell-name-block"><span class="cell-name-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-name-timestamp">${tsDisplay}</span>` : ''}</div></div></td>`;
+          }
         } else {
-          rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div><div class="cell-name-block"><span class="cell-name-text">${escHtml(item.name)}</span>${tsDisplay ? `<span class="cell-name-timestamp">${tsDisplay}</span>` : ''}</div></div></td>`;
+          // Subsequent name columns without avatar
+          if (editMode) {
+            rowHtml += `<td><input class="cell-input" value="${escHtml(value)}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
+          } else {
+            if (value) {
+              rowHtml += `<td><div class="cell-content"><span class="cell-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-timestamp">${tsDisplay}</span>` : ''}</div></td>`;
+            } else {
+              rowHtml += `<td><div class="cell-content empty">—</div></td>`;
+            }
+          }
         }
       } else {
         const value = item[col] || '';
@@ -2357,9 +2412,9 @@ function renderDetail() {
   
   let html = `
     <div class="detail-header">
-      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(item.name)}">${getInitials(item.name)}</div>
+      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="detail-title-block">
-        <div class="detail-name" id="detail-name" contenteditable="true" onblur="saveField('name')">${escHtml(item.name)}</div>
+        <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(schema.subtitle(item))}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(schema.meta(item))}</div>
       </div>
@@ -2406,7 +2461,7 @@ function updateDetailHeader() {
   const schema = getSchema();
   if (!item) return;
   const avatar = document.getElementById('detail-avatar');
-  if (avatar) { avatar.textContent = getInitials(item.name); avatar.style.background = getAvatarColor(item.name); }
+  if (avatar) { avatar.textContent = getInitials(item.name, item.first_name, item.last_name); avatar.style.background = getAvatarColor(getDisplayName(item), item.avatar_color); }
   const subtitle = document.getElementById('detail-subtitle');
   if (subtitle) subtitle.textContent = schema.subtitle(item);
   const meta = document.getElementById('detail-meta');
@@ -2836,7 +2891,7 @@ async function signInWithPassword() {
   btn.disabled = true;
   btn.textContent = 'Signing in...';
   
-  const { error } = await supabaseClient.auth.signInWithPassword({
+  const { error } = await supabaseClientClient.auth.signInWithPassword({
     email: email,
     password: password
   });
@@ -2865,7 +2920,7 @@ async function sendMagicLink() {
   btn.disabled = true;
   btn.textContent = 'Sending...';
   
-  const { error } = await supabaseClient.auth.signInWithOtp({
+  const { error } = await supabaseClientClient.auth.signInWithOtp({
     email: email,
     options: {
       emailRedirectTo: window.location.origin + window.location.pathname
@@ -2885,7 +2940,7 @@ async function sendMagicLink() {
 }
 
 async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const { data: { session } } = await supabaseClientClient.auth.getSession();
   
   if (session) {
     document.getElementById('login-screen').classList.add('hidden');
