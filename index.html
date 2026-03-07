@@ -1601,7 +1601,7 @@ async function save() {
 async function loadFromSupabase() {
   try {
     // Load sets
-    const { data: sets, error: setsError } = await supabaseClientClient
+    const { data: sets, error: setsError } = await supabaseClient
       .from('sets')
       .select('*')
       .order('sort_order', { ascending: true });
@@ -1609,7 +1609,7 @@ async function loadFromSupabase() {
     if (setsError) throw setsError;
     
     // Load items
-    const { data: items, error: itemsError } = await supabaseClientClient
+    const { data: items, error: itemsError } = await supabaseClient
       .from('items')
       .select('*');
     
@@ -1651,7 +1651,7 @@ function load() {
 
 async function saveSet(set) {
   try {
-    const { error } = await supabaseClientClient
+    const { error } = await supabaseClient
       .from('sets')
       .upsert({
         id: set.id,
@@ -1669,7 +1669,7 @@ async function saveSet(set) {
 
 async function deleteSetFromDB(setId) {
   try {
-    const { error } = await supabaseClientClient
+    const { error } = await supabaseClient
       .from('sets')
       .delete()
       .eq('id', setId);
@@ -1685,7 +1685,7 @@ async function saveItem(item, setId) {
     // Extract known fields and put rest in data JSONB
     const { id, name, aliases, tags, notes, _timestamps, ...rest } = item;
     
-    const { error } = await supabaseClientClient
+    const { error } = await supabaseClient
       .from('items')
       .upsert({
         id: id,
@@ -1706,7 +1706,7 @@ async function saveItem(item, setId) {
 
 async function deleteItemFromDB(itemId) {
   try {
-    const { error } = await supabaseClientClient
+    const { error } = await supabaseClient
       .from('items')
       .delete()
       .eq('id', itemId);
@@ -2891,7 +2891,7 @@ async function signInWithPassword() {
   btn.disabled = true;
   btn.textContent = 'Signing in...';
   
-  const { error } = await supabaseClientClient.auth.signInWithPassword({
+  const { error } = await supabaseClient.auth.signInWithPassword({
     email: email,
     password: password
   });
@@ -2920,7 +2920,7 @@ async function sendMagicLink() {
   btn.disabled = true;
   btn.textContent = 'Sending...';
   
-  const { error } = await supabaseClientClient.auth.signInWithOtp({
+  const { error } = await supabaseClient.auth.signInWithOtp({
     email: email,
     options: {
       emailRedirectTo: window.location.origin + window.location.pathname
@@ -2940,7 +2940,7 @@ async function sendMagicLink() {
 }
 
 async function checkAuth() {
-  const { data: { session } } = await supabaseClientClient.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   
   if (session) {
     document.getElementById('login-screen').classList.add('hidden');
