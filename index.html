@@ -1993,12 +1993,22 @@ textarea.field-value {
 <div id="toast"></div>
 
 <script>
+console.log('[INDEX] Script starting...');
+
 // ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
 // Replace these with your Supabase project values
 const SUPABASE_URL = 'https://ogpfimmxqeqqeiiqvsqk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZpbW14cWVxcWVpaXF2c3FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzMjY4NDksImV4cCI6MjA4NzkwMjg0OX0.nVgt6O6Lz77T55b01JqhVXeAVhoxElQ5v3bn2ETRjk4';
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('[INDEX] Creating Supabase client...');
+
+let supabaseClient;
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('[INDEX] Supabase client created');
+} catch (err) {
+  console.error('[INDEX] Failed to create Supabase client:', err);
+}
 
 // ─── SET SCHEMAS ─────────────────────────────────────────────────────────────
 
@@ -4241,7 +4251,10 @@ window.INDEX = {
 
 function checkCortexLink() {
   const cortexData = localStorage.getItem('cortex_projects');
-  document.getElementById('cortex-dot').classList.toggle('disconnected', !cortexData);
+  const dot = document.getElementById('cortex-dot');
+  if (dot) {
+    dot.classList.toggle('disconnected', !cortexData);
+  }
 }
 
 // ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
@@ -4321,15 +4334,21 @@ async function sendMagicLink() {
 }
 
 async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  
-  if (session) {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    await initApp();
-  } else {
-    document.getElementById('login-screen').classList.remove('hidden');
-    document.getElementById('app').classList.add('hidden');
+  console.log('[INDEX] checkAuth starting...');
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    console.log('[INDEX] Session:', session ? 'exists' : 'none');
+    
+    if (session) {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      await initApp();
+    } else {
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+    }
+  } catch (err) {
+    console.error('[INDEX] checkAuth error:', err);
   }
 }
 
@@ -4350,8 +4369,12 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initApp() {
+  console.log('[INDEX] initApp starting...');
+  
   try {
+    console.log('[INDEX] Loading from Supabase...');
     await loadFromSupabase();
+    console.log('[INDEX] Loaded', data.sets.length, 'sets');
   } catch (err) {
     console.error('[INDEX] Failed to load data:', err);
   }
@@ -4368,11 +4391,13 @@ async function initApp() {
     console.error('[INDEX] Failed to check audit access:', err);
   }
   
+  console.log('[INDEX] Calling renderAll...');
   renderAll();
+  console.log('[INDEX] renderAll complete');
   setViewMode('table');
   checkCortexLink();
   setInterval(checkCortexLink, 5000);
-  console.log('[INDEX] Loaded', data.sets.length, 'sets');
+  console.log('[INDEX] initApp complete');
 }
 
 // Check auth on page load (wait for DOM to be ready)
