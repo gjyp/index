@@ -3440,10 +3440,18 @@ function renderDetail() {
   const setColor = set?.color;
   const timestamps = item._timestamps || {};
   
-  // Apply shorthands to subtitle for contacts
-  let subtitle = schema.subtitle(item);
-  if (set?.schema === 'contacts' && item.institution) {
-    subtitle = applyShorthand(item.institution, 'institution');
+  // Apply shorthands and build header info for contacts
+  let headerSubtitle = '';  // Line 1 under name (title)
+  let headerMeta = '';      // Line 2 under name (institution | department)
+  
+  if (set?.schema === 'contacts') {
+    headerSubtitle = item.title || '';
+    const inst = applyShorthand(item.institution, 'institution');
+    const dept = applyShorthand(item.department, 'department');
+    headerMeta = [inst, dept].filter(Boolean).join(' | ');
+  } else {
+    headerSubtitle = schema.subtitle(item);
+    headerMeta = schema.meta(item);
   }
   
   let html = `
@@ -3451,8 +3459,8 @@ function renderDetail() {
       <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="detail-title-block">
         <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
-        <div class="detail-subtitle" id="detail-subtitle">${escHtml(subtitle)}</div>
-        <div class="detail-meta" id="detail-meta">${escHtml(schema.meta(item))}</div>
+        <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
+        <div class="detail-meta" id="detail-meta">${escHtml(headerMeta)}</div>
       </div>
       <div class="detail-actions" ${editMode ? '' : 'style="display:none"'}>
         <button class="detail-btn" onclick="duplicateItem()">Duplicate</button>
@@ -3537,10 +3545,19 @@ function updateDetailHeader() {
   const setColor = set?.color;
   const avatar = document.getElementById('detail-avatar');
   if (avatar) { avatar.textContent = getInitials(item.name, item.first_name, item.last_name); avatar.style.background = getAvatarColor(getDisplayName(item), item.avatar_color, setColor); }
-  const subtitle = document.getElementById('detail-subtitle');
-  if (subtitle) subtitle.textContent = schema.subtitle(item);
-  const meta = document.getElementById('detail-meta');
-  if (meta) meta.textContent = schema.meta(item);
+  
+  const subtitleEl = document.getElementById('detail-subtitle');
+  const metaEl = document.getElementById('detail-meta');
+  
+  if (set?.schema === 'contacts') {
+    if (subtitleEl) subtitleEl.textContent = item.title || '';
+    const inst = applyShorthand(item.institution, 'institution');
+    const dept = applyShorthand(item.department, 'department');
+    if (metaEl) metaEl.textContent = [inst, dept].filter(Boolean).join(' | ');
+  } else {
+    if (subtitleEl) subtitleEl.textContent = schema.subtitle(item);
+    if (metaEl) metaEl.textContent = schema.meta(item);
+  }
 }
 
 function renderAll() {
