@@ -867,11 +867,11 @@ body {
 .detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 32px;
+  padding: 20px 32px;
 }
 
 /* Field groups */
-.field-group { margin-bottom: 28px; }
+.field-group { margin-bottom: 20px; }
 .field-group-title {
   font-family: var(--mono);
   font-size: 9px;
@@ -879,15 +879,15 @@ body {
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--ink-light);
-  margin-bottom: 10px;
-  padding-bottom: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--rule);
 }
 
 .field-row {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   gap: 12px;
 }
 .field-label {
@@ -3275,7 +3275,7 @@ function renderDetail() {
     html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="field-row"><div class="field-label">Names</div><div class="field-value-readonly">${item.aliases.map(a => escHtml(a)).join(', ')}</div></div></div>`;
   }
   
-  html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="field-row"><div class="field-label">Tags</div><div class="tags-container" id="tags-container"></div></div></div>`;
+  html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="tags-container" id="tags-container"></div></div>`;
   
   if (editMode) {
     html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><textarea class="field-value" id="field-notes" placeholder="Additional notes…" onchange="saveField('notes')">${escHtml(item.notes || '')}</textarea>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
