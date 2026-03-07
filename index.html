@@ -198,6 +198,56 @@ body {
   font-style: italic;
 }
 
+/* Set Color Picker */
+.set-color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.set-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+}
+.set-color-swatch:hover {
+  transform: scale(1.1);
+}
+.set-color-swatch.selected {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--ink);
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+  min-width: 140px;
+  z-index: 1100;
+  display: none;
+}
+.context-menu.visible {
+  display: block;
+}
+.context-menu-item {
+  padding: 10px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.context-menu-item:hover {
+  background: var(--paper);
+}
+.context-menu-item.danger {
+  color: var(--red);
+}
+.context-menu-item.danger:hover {
+  background: #fef2f2;
+}
+
 /* Relationship Preview Popup */
 .relationship-preview {
   position: fixed;
@@ -1478,6 +1528,10 @@ textarea.field-value {
           <option value="generic">Generic (name, notes)</option>
         </select>
       </div>
+      <div class="modal-field">
+        <label class="modal-label">Set Color</label>
+        <div class="set-color-picker" id="new-set-color-picker"></div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn" onclick="closeSetModal()">Cancel</button>
@@ -1580,6 +1634,36 @@ textarea.field-value {
     <div class="modal-foot">
       <button class="btn" onclick="closeRelationshipModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveRelationship()">Add Relationship</button>
+    </div>
+  </div>
+</div>
+
+<!-- SET CONTEXT MENU -->
+<div class="context-menu" id="set-context-menu">
+  <div class="context-menu-item" onclick="openEditSetModal()">Edit Set</div>
+  <div class="context-menu-item danger" onclick="confirmDeleteSet()">Delete Set</div>
+</div>
+
+<!-- EDIT SET MODAL -->
+<div class="modal-overlay" id="edit-set-modal" onclick="if(event.target===this)closeEditSetModal()">
+  <div class="modal" style="width: 360px;">
+    <div class="modal-head">
+      <div class="modal-title">Edit Set</div>
+      <button class="modal-close" onclick="closeEditSetModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label class="modal-label">Set Name</label>
+        <input type="text" class="modal-input" id="edit-set-name" placeholder="Set name">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Set Color</label>
+        <div class="set-color-picker" id="edit-set-color-picker"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeEditSetModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditSet()">Save</button>
     </div>
   </div>
 </div>
@@ -1823,6 +1907,7 @@ async function loadFromSupabase() {
       id: set.id,
       name: set.name,
       schema: set.schema,
+      color: set.color || null,
       suggestedTags: set.suggested_tags || [],
       items: items
         .filter(item => item.set_id === set.id)
@@ -1860,6 +1945,7 @@ async function saveSet(set) {
         id: set.id,
         name: set.name,
         schema: set.schema,
+        color: set.color || null,
         suggested_tags: set.suggestedTags || [],
         sort_order: data.sets.findIndex(s => s.id === set.id)
       });
@@ -1978,12 +2064,30 @@ function getDisplayName(item) {
   return item.name || 'Unnamed';
 }
 
-function getAvatarColor(name, customColor) {
+function getAvatarColor(name, customColor, setColor) {
+  // Priority: 1) item custom color, 2) set color, 3) hash-based fallback
   if (customColor) return customColor;
+  if (setColor) return setColor;
   if (!name) return AVATAR_COLORS[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function renderSetColorPicker(containerId, selectedColor) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = AVATAR_COLORS.map(color => `
+    <div class="set-color-swatch ${color === selectedColor ? 'selected' : ''}" 
+         style="background: ${color}" 
+         data-color="${color}"
+         onclick="selectSetColor(this, '${containerId}')"></div>
+  `).join('');
+}
+
+function selectSetColor(swatch, containerId) {
+  document.querySelectorAll(`#${containerId} .set-color-swatch`).forEach(s => s.classList.remove('selected'));
+  swatch.classList.add('selected');
 }
 
 function escHtml(str) {
@@ -2042,8 +2146,9 @@ function switchSet(setId) {
 async function createSet() {
   const name = document.getElementById('new-set-name').value.trim();
   const schema = document.getElementById('new-set-schema').value;
+  const color = document.querySelector('#new-set-color-picker .set-color-swatch.selected')?.dataset.color || AVATAR_COLORS[0];
   if (!name) { toast('Set name is required'); return; }
-  const newSet = { id: crypto.randomUUID(), name, schema, items: [], suggestedTags: [] };
+  const newSet = { id: crypto.randomUUID(), name, schema, color, items: [], suggestedTags: [] };
   data.sets.push(newSet);
   data.activeSetId = newSet.id;
   await saveSet(newSet);
@@ -2710,12 +2815,61 @@ function onSetDragEnd(e) {
 
 // ─── SET CONTEXT MENU ────────────────────────────────────────────────────────
 
+let contextMenuSetId = null;
+
 function showSetContextMenu(e, setId) {
   e.preventDefault();
+  contextMenuSetId = setId;
   
-  // For now, just confirm and delete directly
-  // Could build a proper context menu later
-  const set = data.sets.find(s => s.id === setId);
+  const menu = document.getElementById('set-context-menu');
+  menu.style.left = e.pageX + 'px';
+  menu.style.top = e.pageY + 'px';
+  menu.classList.add('visible');
+  
+  // Close on click outside
+  setTimeout(() => {
+    document.addEventListener('click', hideSetContextMenu, { once: true });
+  }, 0);
+}
+
+function hideSetContextMenu() {
+  document.getElementById('set-context-menu').classList.remove('visible');
+}
+
+function openEditSetModal() {
+  hideSetContextMenu();
+  const set = data.sets.find(s => s.id === contextMenuSetId);
+  if (!set) return;
+  
+  document.getElementById('edit-set-name').value = set.name;
+  renderSetColorPicker('edit-set-color-picker', set.color || AVATAR_COLORS[0]);
+  document.getElementById('edit-set-modal').classList.add('open');
+}
+
+function closeEditSetModal() {
+  document.getElementById('edit-set-modal').classList.remove('open');
+}
+
+async function saveEditSet() {
+  const set = data.sets.find(s => s.id === contextMenuSetId);
+  if (!set) return;
+  
+  const name = document.getElementById('edit-set-name').value.trim();
+  const color = document.querySelector('#edit-set-color-picker .set-color-swatch.selected')?.dataset.color || AVATAR_COLORS[0];
+  
+  if (!name) { toast('Set name is required'); return; }
+  
+  set.name = name;
+  set.color = color;
+  await saveSet(set);
+  closeEditSetModal();
+  renderAll();
+  toast('Set updated');
+}
+
+function confirmDeleteSet() {
+  hideSetContextMenu();
+  const set = data.sets.find(s => s.id === contextMenuSetId);
   if (!set) return;
   
   const itemCount = set.items.length;
@@ -2724,7 +2878,7 @@ function showSetContextMenu(e, setId) {
     : `Delete "${set.name}"?`;
   
   if (confirm(message)) {
-    deleteSet(setId);
+    deleteSet(contextMenuSetId);
   }
 }
 
@@ -2763,10 +2917,11 @@ function renderItemList() {
   const schema = getSchema();
   const filtered = getFilteredItems();
   const container = document.getElementById('item-list');
+  const setColor = set?.color;
   
   container.innerHTML = filtered.map(item => `
     <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
-      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
+      <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="list-info">
         <div class="list-name">${escHtml(getDisplayName(item))}</div>
         <div class="list-meta">${escHtml(schema.listMeta(item))}</div>
@@ -2779,6 +2934,8 @@ function renderItemList() {
 
 function renderTable() {
   const schema = getSchema();
+  const set = getActiveSet();
+  const setColor = set?.color;
   const filtered = getFilteredItems();
   const columns = schema.tableColumns || ['name'];
   
@@ -2819,9 +2976,9 @@ function renderTable() {
         if (isFirstCol) {
           // First column gets avatar
           if (editMode) {
-            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div><input class="cell-name-input" value="${escHtml(value)}" onchange="saveTableCell('${item.id}', '${col}', this.value)" onblur="renderTable()"></div></td>`;
+            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div><input class="cell-name-input" value="${escHtml(value)}" onchange="saveTableCell('${item.id}', '${col}', this.value)" onblur="renderTable()"></div></td>`;
           } else {
-            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div><div class="cell-name-block"><span class="cell-name-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-name-timestamp">${tsDisplay}</span>` : ''}</div></div></td>`;
+            rowHtml += `<td><div class="cell-name"><div class="cell-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div><div class="cell-name-block"><span class="cell-name-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-name-timestamp">${tsDisplay}</span>` : ''}</div></div></td>`;
           }
         } else {
           // Subsequent name columns without avatar
@@ -2880,11 +3037,13 @@ function renderDetail() {
   emptyState.style.display = 'none';
   detail.classList.add('visible');
   
+  const set = getActiveSet();
+  const setColor = set?.color;
   const timestamps = item._timestamps || {};
   
   let html = `
     <div class="detail-header">
-      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
+      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="detail-title-block">
         <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(schema.subtitle(item))}</div>
@@ -2936,8 +3095,10 @@ function updateDetailHeader() {
   const item = getItem(activeItemId);
   const schema = getSchema();
   if (!item) return;
+  const set = getActiveSet();
+  const setColor = set?.color;
   const avatar = document.getElementById('detail-avatar');
-  if (avatar) { avatar.textContent = getInitials(item.name, item.first_name, item.last_name); avatar.style.background = getAvatarColor(getDisplayName(item), item.avatar_color); }
+  if (avatar) { avatar.textContent = getInitials(item.name, item.first_name, item.last_name); avatar.style.background = getAvatarColor(getDisplayName(item), item.avatar_color, setColor); }
   const subtitle = document.getElementById('detail-subtitle');
   if (subtitle) subtitle.textContent = schema.subtitle(item);
   const meta = document.getElementById('detail-meta');
@@ -2971,7 +3132,12 @@ function openNewModal() {
 }
 
 function closeNewModal() { document.getElementById('new-modal').classList.remove('open'); }
-function openSetModal() { document.getElementById('set-modal').classList.add('open'); document.getElementById('new-set-name').value = ''; document.getElementById('new-set-name').focus(); }
+function openSetModal() { 
+  document.getElementById('set-modal').classList.add('open'); 
+  document.getElementById('new-set-name').value = ''; 
+  renderSetColorPicker('new-set-color-picker', AVATAR_COLORS[0]);
+  document.getElementById('new-set-name').focus(); 
+}
 function closeSetModal() { document.getElementById('set-modal').classList.remove('open'); }
 
 // ─── TAG MANAGER ─────────────────────────────────────────────────────────────
