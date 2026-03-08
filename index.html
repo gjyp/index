@@ -390,11 +390,11 @@ body {
   border-bottom: 1px solid var(--rule);
 }
 
-/* Shorthands */
-.shorthands-list {
+/* Lexicon */
+.lexicon-list {
   margin-bottom: 8px;
 }
-.shorthands-item {
+.lexicon-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -402,37 +402,37 @@ body {
   border-bottom: 1px solid var(--rule);
   font-size: 12px;
 }
-.shorthands-item:last-child {
+.lexicon-item:last-child {
   border-bottom: none;
 }
-.shorthands-full {
+.lexicon-full {
   flex: 2;
   color: var(--ink);
 }
-.shorthands-arrow {
+.lexicon-arrow {
   color: var(--ink-faint);
   font-size: 10px;
 }
-.shorthands-short {
+.lexicon-short {
   flex: 1;
   font-weight: 500;
   color: var(--ink);
 }
-.shorthands-remove {
+.lexicon-remove {
   font-size: 14px;
   color: var(--ink-faint);
   cursor: pointer;
   padding: 0 4px;
 }
-.shorthands-remove:hover {
+.lexicon-remove:hover {
   color: var(--red);
 }
-.shorthands-add {
+.lexicon-add {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.shorthands-input {
+.lexicon-input {
   flex: 2;
   padding: 6px 10px;
   font-family: var(--sans);
@@ -441,13 +441,13 @@ body {
   background: var(--paper);
   outline: none;
 }
-.shorthands-input.short {
+.lexicon-input.short {
   flex: 1;
 }
-.shorthands-input:focus {
+.lexicon-input:focus {
   border-color: var(--ink-faint);
 }
-.shorthands-empty {
+.lexicon-empty {
   font-size: 12px;
   color: var(--ink-faint);
   font-style: italic;
@@ -990,6 +990,99 @@ body {
   letter-spacing: 0.5px;
   margin-top: 2px;
 }
+.detail-secondary-affiliations {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+/* Additional Affiliations Edit UI */
+.affiliation-item {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 12px;
+  margin-bottom: 8px;
+  position: relative;
+}
+.affiliation-item.dragging {
+  opacity: 0.5;
+}
+.affiliation-drag-handle {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: grab;
+  color: var(--ink-faint);
+  font-size: 10px;
+  padding: 8px 4px;
+}
+.affiliation-drag-handle:active {
+  cursor: grabbing;
+}
+.affiliation-remove {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  cursor: pointer;
+  color: var(--ink-faint);
+  font-size: 14px;
+}
+.affiliation-remove:hover {
+  color: var(--red);
+}
+.affiliation-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.affiliation-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.affiliation-field label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-light);
+  min-width: 70px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.affiliation-field input {
+  flex: 1;
+  padding: 6px 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  border: 1px solid var(--rule);
+  background: var(--white);
+}
+.affiliation-field input:focus {
+  outline: none;
+  border-color: var(--ink-faint);
+}
+.add-affiliation-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-light);
+  background: none;
+  border: 1px dashed var(--rule);
+  cursor: pointer;
+  margin-top: 8px;
+}
+.add-affiliation-btn:hover {
+  border-color: var(--ink-light);
+  color: var(--ink);
+}
+
 .detail-actions {
   display: flex;
   gap: 8px;
@@ -1682,7 +1775,7 @@ textarea.field-value {
     <div id="item-list"></div>
     
     <div id="sidebar-footer">
-      <span class="footer-link" onclick="openShorthandsModal()">Shorthands</span>
+      <span class="footer-link" onclick="openLexiconPanel()">Lexicon</span>
       <span class="footer-link" id="audit-log-link" onclick="openAuditLog()" style="display: none;">Activity</span>
       <div class="cortex-link" onclick="signOut()" style="cursor: pointer;" title="Sign out">
         <span class="cortex-label">Sign Out</span>
@@ -1746,32 +1839,32 @@ textarea.field-value {
       </div>
     </div>
     
-    <!-- Shorthands Panel -->
-    <div class="panel-view" id="shorthands-panel" style="display: none;">
+    <!-- Lexicon Panel -->
+    <div class="panel-view" id="lexicon-panel" style="display: none;">
       <div class="panel-header">
-        <div class="panel-title">Shorthands</div>
-        <button class="panel-close" onclick="closeShorthandsModal()">×</button>
+        <div class="panel-title">Lexicon</div>
+        <button class="panel-close" onclick="closeLexiconPanel()">×</button>
       </div>
       <div class="panel-body">
-        <p class="panel-hint">Shorthands replace long names with abbreviations in compact displays.</p>
+        <p class="panel-hint">Define abbreviations for institutions and departments used in compact displays.</p>
         
         <div class="panel-section">
           <div class="panel-section-title">Institutions</div>
-          <div class="shorthands-list" id="shorthands-institutions"></div>
-          <div class="shorthands-add">
-            <input type="text" class="shorthands-input" id="new-shorthand-inst-full" placeholder="Full name (e.g., Massachusetts Institute of Technology)">
-            <input type="text" class="shorthands-input short" id="new-shorthand-inst-short" placeholder="Short (e.g., MIT)">
-            <button class="btn" onclick="addShorthand('institution')">Add</button>
+          <div class="lexicon-list" id="lexicon-institutions"></div>
+          <div class="lexicon-add">
+            <input type="text" class="lexicon-input" id="new-lexicon-inst-full" placeholder="Full name (e.g., Harvard Medical School)">
+            <input type="text" class="lexicon-input short" id="new-lexicon-inst-short" placeholder="Short (e.g., HMS)">
+            <button class="btn" onclick="addLexiconEntry('institution')">Add</button>
           </div>
         </div>
         
         <div class="panel-section">
           <div class="panel-section-title">Departments / Units</div>
-          <div class="shorthands-list" id="shorthands-departments"></div>
-          <div class="shorthands-add">
-            <input type="text" class="shorthands-input" id="new-shorthand-dept-full" placeholder="Full name (e.g., Department of Biology)">
-            <input type="text" class="shorthands-input short" id="new-shorthand-dept-short" placeholder="Short (e.g., Biology)">
-            <button class="btn" onclick="addShorthand('department')">Add</button>
+          <div class="lexicon-list" id="lexicon-departments"></div>
+          <div class="lexicon-add">
+            <input type="text" class="lexicon-input" id="new-lexicon-dept-full" placeholder="Full name (e.g., Department of Neurobiology)">
+            <input type="text" class="lexicon-input short" id="new-lexicon-dept-short" placeholder="Short (e.g., Neuro)">
+            <button class="btn" onclick="addLexiconEntry('department')">Add</button>
           </div>
         </div>
       </div>
@@ -2635,6 +2728,78 @@ async function saveTableCell(itemId, key, value) {
   renderItemList();
 }
 
+// ─── AFFILIATIONS ────────────────────────────────────────────────────────────
+
+let draggedAffiliationIndex = null;
+
+function addAffiliation() {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  if (!item.affiliations) item.affiliations = [];
+  item.affiliations.push({ institution: '', department: '', title: '' });
+  
+  saveItem(item, set.id);
+  renderDetail();
+}
+
+function removeAffiliation(index) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set || !item.affiliations) return;
+  
+  item.affiliations.splice(index, 1);
+  
+  saveItem(item, set.id);
+  renderDetail();
+}
+
+function updateAffiliation(index, field, value) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set || !item.affiliations) return;
+  
+  if (!item.affiliations[index]) return;
+  item.affiliations[index][field] = value;
+  
+  saveItem(item, set.id);
+  updateDetailHeader();
+  renderItemList();
+}
+
+function handleAffiliationDragStart(e) {
+  draggedAffiliationIndex = parseInt(e.target.dataset.index);
+  e.target.classList.add('dragging');
+}
+
+function handleAffiliationDragOver(e) {
+  e.preventDefault();
+}
+
+function handleAffiliationDrop(e) {
+  e.preventDefault();
+  const targetIndex = parseInt(e.target.closest('.affiliation-item')?.dataset.index);
+  if (targetIndex === undefined || draggedAffiliationIndex === null) return;
+  if (targetIndex === draggedAffiliationIndex) return;
+  
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set || !item.affiliations) return;
+  
+  // Reorder affiliations
+  const [moved] = item.affiliations.splice(draggedAffiliationIndex, 1);
+  item.affiliations.splice(targetIndex, 0, moved);
+  
+  saveItem(item, set.id);
+  renderDetail();
+}
+
+function handleAffiliationDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedAffiliationIndex = null;
+}
+
 // ─── ALIASES ─────────────────────────────────────────────────────────────────
 
 function renderAliases() {
@@ -2768,7 +2933,7 @@ function renderRelationships() {
   forward.forEach(rel => {
     const target = rel.target;
     const displayName = getDisplayName(target);
-    const meta = target.title || applyShorthand(target.institution, 'institution') || '';
+    const meta = target.title || applyLexicon(target.institution, 'institution') || '';
     html += `
       <div class="relationship-item" 
            onclick="navigateToContact('${target.id}', '${target.setId}')"
@@ -2786,7 +2951,7 @@ function renderRelationships() {
   reverse.forEach(rel => {
     const from = rel.from;
     const displayName = getDisplayName(from);
-    const meta = from.title || applyShorthand(from.institution, 'institution') || '';
+    const meta = from.title || applyLexicon(from.institution, 'institution') || '';
     html += `
       <div class="relationship-item"
            onclick="navigateToContact('${from.id}', '${from.setId}')"
@@ -2947,8 +3112,8 @@ function showRelationshipPreview(event, contactId) {
   
   let html = `<div class="preview-name">${escHtml(displayName)}</div>`;
   if (contact.title) html += `<div class="preview-title">${escHtml(contact.title)}</div>`;
-  if (contact.department) html += `<div class="preview-field">${escHtml(applyShorthand(contact.department, 'department'))}</div>`;
-  if (contact.institution) html += `<div class="preview-field">${escHtml(applyShorthand(contact.institution, 'institution'))}</div>`;
+  if (contact.department) html += `<div class="preview-field">${escHtml(applyLexicon(contact.department, 'department'))}</div>`;
+  if (contact.institution) html += `<div class="preview-field">${escHtml(applyLexicon(contact.institution, 'institution'))}</div>`;
   if (contact.email) html += `<div class="preview-field"><a href="mailto:${escHtml(contact.email)}">${escHtml(contact.email)}</a></div>`;
   if (contact.phone_office) html += `<div class="preview-field">Office: ${escHtml(contact.phone_office)}</div>`;
   if (contact.phone_cell) html += `<div class="preview-field">Cell: ${escHtml(contact.phone_cell)}</div>`;
@@ -3293,8 +3458,8 @@ function renderItemList() {
     // For contacts schema, show title on line 1, institution | department on line 2
     if (set?.schema === 'contacts') {
       const title = item.title || '';
-      const inst = applyShorthand(item.institution, 'institution');
-      const dept = applyShorthand(item.department, 'department');
+      const inst = applyLexicon(item.institution, 'institution');
+      const dept = applyLexicon(item.department, 'department');
       const affiliation = [inst, dept].filter(Boolean).join(' | ');
       
       if (title) metaHtml += `<div class="list-meta-line">${escHtml(title)}</div>`;
@@ -3389,9 +3554,19 @@ function renderTable() {
         }
       } else {
         let value = item[col] || '';
-        // Apply shorthands for institution and department columns in display
+        // Apply lexicon for institution and department columns in display
         if (!editMode && (col === 'institution' || col === 'department')) {
-          value = applyShorthand(value, col === 'institution' ? 'institution' : 'department');
+          value = applyLexicon(value, col === 'institution' ? 'institution' : 'department');
+          
+          // For institution column, also append secondary affiliations
+          if (col === 'institution' && item.affiliations && item.affiliations.length > 0) {
+            const secondaryInsts = item.affiliations
+              .map(aff => applyLexicon(aff.institution, 'institution'))
+              .filter(Boolean);
+            if (secondaryInsts.length > 0) {
+              value = [value, ...secondaryInsts].filter(Boolean).join(' · ');
+            }
+          }
         }
         if (editMode) {
           rowHtml += `<td><input class="cell-input" value="${escHtml(item[col] || '')}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
@@ -3440,15 +3615,27 @@ function renderDetail() {
   const setColor = set?.color;
   const timestamps = item._timestamps || {};
   
-  // Apply shorthands and build header info for contacts
+  // Apply lexicon and build header info for contacts
   let headerSubtitle = '';  // Line 1 under name (title)
   let headerMeta = '';      // Line 2 under name (institution | department)
+  let headerSecondary = ''; // Line 3 under name (additional affiliations)
   
   if (set?.schema === 'contacts') {
     headerSubtitle = item.title || '';
-    const inst = applyShorthand(item.institution, 'institution');
-    const dept = applyShorthand(item.department, 'department');
+    const inst = applyLexicon(item.institution, 'institution');
+    const dept = applyLexicon(item.department, 'department');
     headerMeta = [inst, dept].filter(Boolean).join(' | ');
+    
+    // Build secondary affiliations line
+    const affiliations = item.affiliations || [];
+    if (affiliations.length > 0) {
+      headerSecondary = affiliations.map(aff => {
+        const affInst = applyLexicon(aff.institution, 'institution');
+        const affDept = applyLexicon(aff.department, 'department');
+        const affParts = [affInst, affDept].filter(Boolean).join(' | ');
+        return aff.title ? `${aff.title}, ${affParts}` : affParts;
+      }).join(' · ');
+    }
   } else {
     headerSubtitle = schema.subtitle(item);
     headerMeta = schema.meta(item);
@@ -3461,6 +3648,7 @@ function renderDetail() {
         <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(headerMeta)}</div>
+        ${headerSecondary ? `<div class="detail-secondary-affiliations">${escHtml(headerSecondary)}</div>` : ''}
       </div>
       <div class="detail-actions" ${editMode ? '' : 'style="display:none"'}>
         <button class="detail-btn" onclick="duplicateItem()">Duplicate</button>
@@ -3501,12 +3689,64 @@ function renderDetail() {
         // Skip empty fields in read-only mode
       }
     });
+    
+    // After Affiliation group, add additional affiliations UI (contacts schema only)
+    if (group.group === 'Affiliation' && set?.schema === 'contacts') {
+      const affiliations = item.affiliations || [];
+      
+      if (editMode) {
+        // Edit mode: show draggable affiliation items
+        html += `<div id="additional-affiliations">`;
+        affiliations.forEach((aff, idx) => {
+          html += `
+            <div class="affiliation-item" draggable="true" data-index="${idx}" 
+                 ondragstart="handleAffiliationDragStart(event)" 
+                 ondragover="handleAffiliationDragOver(event)" 
+                 ondrop="handleAffiliationDrop(event)"
+                 ondragend="handleAffiliationDragEnd(event)">
+              <span class="affiliation-drag-handle">⋮⋮</span>
+              <span class="affiliation-remove" onclick="removeAffiliation(${idx})" title="Remove">×</span>
+              <div class="affiliation-fields">
+                <div class="affiliation-field">
+                  <label>Institution</label>
+                  <input type="text" value="${escHtml(aff.institution || '')}" list="institution-options" onchange="updateAffiliation(${idx}, 'institution', this.value)">
+                </div>
+                <div class="affiliation-field">
+                  <label>Department</label>
+                  <input type="text" value="${escHtml(aff.department || '')}" list="department-options" onchange="updateAffiliation(${idx}, 'department', this.value)">
+                </div>
+                <div class="affiliation-field">
+                  <label>Title</label>
+                  <input type="text" value="${escHtml(aff.title || '')}" onchange="updateAffiliation(${idx}, 'title', this.value)">
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+        html += `<button class="add-affiliation-btn" onclick="addAffiliation()">+ Add Affiliation</button>`;
+      } else {
+        // Read-only mode: show affiliations as simple list
+        if (affiliations.length > 0) {
+          affiliations.forEach(aff => {
+            const affInst = aff.institution || '';
+            const affDept = aff.department || '';
+            const affTitle = aff.title || '';
+            const parts = [affTitle, affInst, affDept].filter(Boolean);
+            if (parts.length > 0) {
+              html += `<div class="field-row"><div class="field-label"></div><div class="field-value-readonly" style="color: var(--ink-light); font-size: 12px;">${escHtml(parts.join(' · '))}</div></div>`;
+            }
+          });
+        }
+      }
+    }
+    
     html += `</div>`;
   });
   
   // Add datalists for autofill
-  html += `<datalist id="institution-options">${shorthands.institution.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
-  html += `<datalist id="department-options">${shorthands.department.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
+  html += `<datalist id="institution-options">${lexicon.institution.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
+  html += `<datalist id="department-options">${lexicon.department.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
   
   // Notes field with timestamp
   const notesTs = timestamps['notes'];
@@ -3551,8 +3791,8 @@ function updateDetailHeader() {
   
   if (set?.schema === 'contacts') {
     if (subtitleEl) subtitleEl.textContent = item.title || '';
-    const inst = applyShorthand(item.institution, 'institution');
-    const dept = applyShorthand(item.department, 'department');
+    const inst = applyLexicon(item.institution, 'institution');
+    const dept = applyLexicon(item.department, 'department');
     if (metaEl) metaEl.textContent = [inst, dept].filter(Boolean).join(' | ');
   } else {
     if (subtitleEl) subtitleEl.textContent = schema.subtitle(item);
@@ -3595,27 +3835,26 @@ function openSetModal() {
 }
 function closeSetModal() { document.getElementById('set-modal').classList.remove('open'); }
 
-// ─── SHORTHANDS ─────────────────────────────────────────────────────────────
+// ─── LEXICON ─────────────────────────────────────────────────────────────────
 
-let shorthands = { institution: [], department: [] };
+let lexicon = { institution: [], department: [] };
 
-async function loadShorthands() {
+async function loadLexicon() {
   try {
     const { data: rows, error } = await supabaseClient
-      .from('shorthands')
+      .from('shorthands')  // Keep table name for now
       .select('*')
       .order('full_text', { ascending: true });
     
     if (error) {
-      // Table might not exist yet, just log and continue
-      console.log('[INDEX] Shorthands table not available:', error.message);
+      console.log('[INDEX] Lexicon table not available:', error.message);
       return;
     }
     
-    shorthands = { institution: [], department: [] };
+    lexicon = { institution: [], department: [] };
     (rows || []).forEach(row => {
       if (row.category === 'institution' || row.category === 'department') {
-        shorthands[row.category].push({
+        lexicon[row.category].push({
           id: row.id,
           full: row.full_text,
           short: row.short_text
@@ -3623,34 +3862,32 @@ async function loadShorthands() {
       }
     });
   } catch (err) {
-    console.error('Load shorthands error:', err);
+    console.error('Load lexicon error:', err);
   }
 }
 
-function applyShorthand(text, category) {
+function applyLexicon(text, category) {
   if (!text) return '';
-  const list = shorthands[category] || [];
-  for (const sh of list) {
-    if (text.toLowerCase() === sh.full.toLowerCase()) {
-      return sh.short;
+  const list = lexicon[category] || [];
+  for (const entry of list) {
+    if (text.toLowerCase() === entry.full.toLowerCase()) {
+      return entry.short;
     }
   }
   return text;
 }
 
-function openShorthandsModal() {
-  // Hide other views, show shorthands panel
+function openLexiconPanel() {
   document.getElementById('detail-view').classList.remove('visible');
   document.getElementById('table-view').classList.remove('visible');
   document.getElementById('audit-panel').style.display = 'none';
-  document.getElementById('shorthands-panel').style.display = 'flex';
+  document.getElementById('lexicon-panel').style.display = 'flex';
   document.getElementById('empty-state').style.display = 'none';
-  renderShorthands();
+  renderLexicon();
 }
 
-function closeShorthandsModal() {
-  document.getElementById('shorthands-panel').style.display = 'none';
-  // Restore appropriate view
+function closeLexiconPanel() {
+  document.getElementById('lexicon-panel').style.display = 'none';
   if (viewMode === 'table') {
     document.getElementById('table-view').classList.add('visible');
   } else {
@@ -3662,41 +3899,41 @@ function closeShorthandsModal() {
   }
 }
 
-function renderShorthands() {
+function renderLexicon() {
   // Institutions
-  const instContainer = document.getElementById('shorthands-institutions');
-  if (shorthands.institution.length === 0) {
-    instContainer.innerHTML = '<div class="shorthands-empty">No institution shorthands</div>';
+  const instContainer = document.getElementById('lexicon-institutions');
+  if (lexicon.institution.length === 0) {
+    instContainer.innerHTML = '<div class="lexicon-empty">No institution abbreviations</div>';
   } else {
-    instContainer.innerHTML = shorthands.institution.map(sh => `
-      <div class="shorthands-item">
-        <span class="shorthands-full">${escHtml(sh.full)}</span>
-        <span class="shorthands-arrow">→</span>
-        <span class="shorthands-short">${escHtml(sh.short)}</span>
-        <span class="shorthands-remove" onclick="removeShorthand('${sh.id}')" title="Remove">×</span>
+    instContainer.innerHTML = lexicon.institution.map(entry => `
+      <div class="lexicon-item">
+        <span class="lexicon-full">${escHtml(entry.full)}</span>
+        <span class="lexicon-arrow">→</span>
+        <span class="lexicon-short">${escHtml(entry.short)}</span>
+        <span class="lexicon-remove" onclick="removeLexiconEntry('${entry.id}')" title="Remove">×</span>
       </div>
     `).join('');
   }
   
   // Departments
-  const deptContainer = document.getElementById('shorthands-departments');
-  if (shorthands.department.length === 0) {
-    deptContainer.innerHTML = '<div class="shorthands-empty">No department shorthands</div>';
+  const deptContainer = document.getElementById('lexicon-departments');
+  if (lexicon.department.length === 0) {
+    deptContainer.innerHTML = '<div class="lexicon-empty">No department abbreviations</div>';
   } else {
-    deptContainer.innerHTML = shorthands.department.map(sh => `
-      <div class="shorthands-item">
-        <span class="shorthands-full">${escHtml(sh.full)}</span>
-        <span class="shorthands-arrow">→</span>
-        <span class="shorthands-short">${escHtml(sh.short)}</span>
-        <span class="shorthands-remove" onclick="removeShorthand('${sh.id}')" title="Remove">×</span>
+    deptContainer.innerHTML = lexicon.department.map(entry => `
+      <div class="lexicon-item">
+        <span class="lexicon-full">${escHtml(entry.full)}</span>
+        <span class="lexicon-arrow">→</span>
+        <span class="lexicon-short">${escHtml(entry.short)}</span>
+        <span class="lexicon-remove" onclick="removeLexiconEntry('${entry.id}')" title="Remove">×</span>
       </div>
     `).join('');
   }
 }
 
-async function addShorthand(category) {
-  const fullInput = document.getElementById(category === 'institution' ? 'new-shorthand-inst-full' : 'new-shorthand-dept-full');
-  const shortInput = document.getElementById(category === 'institution' ? 'new-shorthand-inst-short' : 'new-shorthand-dept-short');
+async function addLexiconEntry(category) {
+  const fullInput = document.getElementById(category === 'institution' ? 'new-lexicon-inst-full' : 'new-lexicon-dept-full');
+  const shortInput = document.getElementById(category === 'institution' ? 'new-lexicon-inst-short' : 'new-lexicon-dept-short');
   
   const fullText = fullInput.value.trim();
   const shortText = shortInput.value.trim();
@@ -3708,7 +3945,7 @@ async function addShorthand(category) {
   
   try {
     const { error } = await supabaseClient
-      .from('shorthands')
+      .from('shorthands')  // Keep table name for now
       .insert({
         full_text: fullText,
         short_text: shortText,
@@ -3719,34 +3956,34 @@ async function addShorthand(category) {
     
     fullInput.value = '';
     shortInput.value = '';
-    await loadShorthands();
-    renderShorthands();
-    renderItemList(); // Refresh to apply new shorthand
-    toast('Shorthand added');
+    await loadLexicon();
+    renderLexicon();
+    renderItemList();
+    toast('Entry added');
   } catch (err) {
-    console.error('Add shorthand error:', err);
-    toast('Failed to add shorthand');
+    console.error('Add lexicon entry error:', err);
+    toast('Failed to add entry');
   }
 }
 
-async function removeShorthand(id) {
-  if (!confirm('Remove this shorthand?')) return;
+async function removeLexiconEntry(id) {
+  if (!confirm('Remove this entry?')) return;
   
   try {
     const { error } = await supabaseClient
-      .from('shorthands')
+      .from('shorthands')  // Keep table name for now
       .delete()
       .eq('id', id);
     
     if (error) throw error;
     
-    await loadShorthands();
-    renderShorthands();
+    await loadLexicon();
+    renderLexicon();
     renderItemList();
-    toast('Shorthand removed');
+    toast('Entry removed');
   } catch (err) {
-    console.error('Remove shorthand error:', err);
-    toast('Failed to remove shorthand');
+    console.error('Remove lexicon entry error:', err);
+    toast('Failed to remove entry');
   }
 }
 
@@ -3800,7 +4037,7 @@ async function openAuditLog() {
   // Hide other views, show audit panel
   document.getElementById('detail-view').classList.remove('visible');
   document.getElementById('table-view').classList.remove('visible');
-  document.getElementById('shorthands-panel').style.display = 'none';
+  document.getElementById('lexicon-panel').style.display = 'none';
   document.getElementById('audit-panel').style.display = 'flex';
   document.getElementById('empty-state').style.display = 'none';
   await loadAuditLogs();
@@ -4400,7 +4637,7 @@ async function initApp() {
   }
   
   try {
-    await loadShorthands();
+    await loadLexicon();
   } catch (err) {
     console.error('[INDEX] Failed to load shorthands:', err);
   }
