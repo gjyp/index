@@ -605,6 +605,25 @@ body {
 
 .set-tab-spacer { flex: 1; }
 
+.set-tab-name {
+  pointer-events: none;
+}
+
+.set-tab-input {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 4px;
+  width: 100%;
+  outline: none;
+}
+
 .set-tab-add {
   writing-mode: horizontal-tb;
   transform: none;
@@ -1820,7 +1839,7 @@ textarea.field-value {
     </div>
     
     <div id="tag-filters">
-      <div class="tag-filter-label">Filter by Tag <span class="tag-manage-link" onclick="openTagManager()">Manage</span></div>
+      <div class="tag-filter-label">Filter by Tag <span class="tag-manage-link" id="tag-manage-link" onclick="openTagManager()">Manage</span></div>
       <div class="tag-filters-list" id="tag-filters-list"></div>
     </div>
     
@@ -2114,8 +2133,8 @@ textarea.field-value {
 
 <!-- SET CONTEXT MENU -->
 <div class="context-menu" id="set-context-menu">
-  <div class="context-menu-item" onclick="openEditSetModal()">Edit Set</div>
-  <div class="context-menu-item danger" onclick="confirmDeleteSet()">Delete Set</div>
+  <div class="context-menu-item" id="ctx-edit-set" onclick="openEditSetModal()">Edit Set</div>
+  <div class="context-menu-item danger" id="ctx-delete-set" onclick="confirmDeleteSet()">Delete Set</div>
 </div>
 
 <!-- EDIT SET MODAL -->
@@ -2256,6 +2275,7 @@ const SCHEMAS = {
         { key: 'contact_name', label: 'Contact', type: 'text', placeholder: 'Contact person' },
         { key: 'email', label: 'Email', type: 'email', placeholder: 'email@vendor.com' },
         { key: 'phone', label: 'Phone', type: 'tel', placeholder: '+1 555 123 4567' },
+        { key: 'website', label: 'Website', type: 'url', placeholder: 'https://...' },
       ]},
       { group: 'Rates', fields: [
         { key: 'rate', label: 'Rate', type: 'text', placeholder: 'e.g. $150/hr, $2,500/event' },
@@ -3447,18 +3467,62 @@ function renderSetTabs() {
          draggable="true"
          style="${set.id === data.activeSetId ? `border-left-color: ${color}` : ''}"
          onclick="switchSet('${set.id}')"
+         ondblclick="editSetNameInline(event, '${set.id}')"
          oncontextmenu="showSetContextMenu(event, '${set.id}')"
          ondragstart="onSetDragStart(event)"
          ondragover="onSetDragOver(event)"
          ondragleave="onSetDragLeave(event)"
          ondrop="onSetDrop(event)"
          ondragend="onSetDragEnd(event)">
-      ${escHtml(set.name)}
+      <span class="set-tab-name">${escHtml(set.name)}</span>
     </div>
   `}).join('');
   html += `<div class="set-tab-spacer"></div>`;
-  html += `<div class="set-tab set-tab-add" onclick="openSetModal()">+</div>`;
+  if (canModerate()) {
+    html += `<div class="set-tab set-tab-add" onclick="openSetModal()">+</div>`;
+  }
   container.innerHTML = html;
+}
+
+function editSetNameInline(event, setId) {
+  if (!canModerate()) return; // Only moderators can rename sets
+  
+  event.stopPropagation();
+  const tab = event.target.closest('.set-tab');
+  const nameSpan = tab.querySelector('.set-tab-name');
+  if (!nameSpan) return;
+  
+  const set = data.sets.find(s => s.id === setId);
+  if (!set) return;
+  
+  // Create input
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = set.name;
+  input.className = 'set-tab-input';
+  input.onclick = (e) => e.stopPropagation();
+  
+  input.onblur = async () => {
+    const newName = input.value.trim();
+    if (newName && newName !== set.name) {
+      set.name = newName;
+      await saveSet(set);
+      toast('Set renamed');
+    }
+    renderSetTabs();
+  };
+  
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      input.blur();
+    } else if (e.key === 'Escape') {
+      renderSetTabs();
+    }
+  };
+  
+  nameSpan.replaceWith(input);
+  input.focus();
+  input.select();
 }
 
 // ─── SET DRAG AND DROP ───────────────────────────────────────────────────────
@@ -3520,6 +3584,10 @@ let contextMenuSetId = null;
 
 function showSetContextMenu(e, setId) {
   e.preventDefault();
+  
+  // Only moderators can access set context menu
+  if (!canModerate()) return;
+  
   contextMenuSetId = setId;
   
   const menu = document.getElementById('set-context-menu');
@@ -4233,28 +4301,87 @@ async function removeLexiconEntry(id) {
   }
 }
 
-// ─── AUDIT LOG ──────────────────────────────────────────────────────────────
+// ─── USER ROLES ──────────────────────────────────────────────────────────────
 
-let canViewAudit = false;
-let auditLogOffset = 0;
-const AUDIT_PAGE_SIZE = 50;
+let userRole = 'viewer'; // 'viewer', 'editor', 'moderator'
 
-async function checkAuditAccess() {
+function canEdit() {
+  return userRole === 'editor' || userRole === 'moderator';
+}
+
+function canModerate() {
+  return userRole === 'moderator';
+}
+
+async function loadUserRole() {
   try {
-    // Try to select from audit_log - RLS will block if no access
-    const { data, error } = await supabaseClient
-      .from('audit_log')
-      .select('id')
-      .limit(1);
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user?.email) return;
     
-    if (!error) {
-      canViewAudit = true;
-      document.getElementById('audit-log-link').style.display = '';
+    const { data, error } = await supabaseClient
+      .from('allowed_users')
+      .select('role')
+      .eq('email', user.email)
+      .single();
+    
+    if (!error && data?.role) {
+      userRole = data.role;
     }
+    
+    applyRolePermissions();
   } catch (err) {
-    // No access, keep hidden
+    console.error('Load user role error:', err);
   }
 }
+
+function applyRolePermissions() {
+  // Edit toggle button
+  const editBtn = document.getElementById('edit-toggle-btn');
+  if (editBtn) {
+    editBtn.style.display = canEdit() ? '' : 'none';
+  }
+  
+  // New item button
+  const newBtns = document.querySelectorAll('.sidebar-new-btn');
+  newBtns.forEach(btn => {
+    btn.style.display = canEdit() ? '' : 'none';
+  });
+  
+  // Lexicon link
+  const lexiconLink = document.querySelector('[onclick="openLexiconPanel()"]');
+  if (lexiconLink) {
+    lexiconLink.style.display = canModerate() ? '' : 'none';
+  }
+  
+  // Activity link
+  const activityLink = document.getElementById('audit-log-link');
+  if (activityLink) {
+    activityLink.style.display = canModerate() ? '' : 'none';
+  }
+  
+  // Tag manage link
+  const tagManageLink = document.getElementById('tag-manage-link');
+  if (tagManageLink) {
+    tagManageLink.style.display = canModerate() ? '' : 'none';
+  }
+  
+  // Set add button (the + tab)
+  const setAddBtn = document.querySelector('.set-tab-add');
+  if (setAddBtn) {
+    setAddBtn.style.display = canModerate() ? '' : 'none';
+  }
+  
+  // If viewer, force edit mode off
+  if (!canEdit() && editMode) {
+    editMode = false;
+    document.getElementById('edit-mode-banner')?.classList.remove('visible');
+  }
+}
+
+// ─── AUDIT LOG ──────────────────────────────────────────────────────────────
+
+let auditLogOffset = 0;
+const AUDIT_PAGE_SIZE = 50;
 
 async function logAuditEntry(itemId, itemName, setName, field, oldValue, newValue) {
   try {
@@ -4277,7 +4404,7 @@ async function logAuditEntry(itemId, itemName, setName, field, oldValue, newValu
 }
 
 async function openAuditLog() {
-  if (!canViewAudit) return;
+  if (!canModerate()) return;
   
   auditLogOffset = 0;
   // Hide other views, show audit panel
@@ -4877,6 +5004,12 @@ supabaseClient.auth.getSession().then(({ data: { session } }) => {
 
 async function initApp() {
   try {
+    await loadUserRole();
+  } catch (err) {
+    console.error('[INDEX] Failed to load user role:', err);
+  }
+  
+  try {
     await loadFromSupabase();
   } catch (err) {
     console.error('[INDEX] Failed to load data:', err);
@@ -4885,16 +5018,11 @@ async function initApp() {
   try {
     await loadLexicon();
   } catch (err) {
-    console.error('[INDEX] Failed to load shorthands:', err);
-  }
-  
-  try {
-    await checkAuditAccess();
-  } catch (err) {
-    console.error('[INDEX] Failed to check audit access:', err);
+    console.error('[INDEX] Failed to load lexicon:', err);
   }
   
   renderAll();
+  applyRolePermissions(); // Re-apply after render
   setViewMode('table');
   checkCortexLink();
   setInterval(checkCortexLink, 5000);
