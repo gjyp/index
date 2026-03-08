@@ -192,11 +192,6 @@ body {
   border-color: var(--ink-light);
   color: var(--ink);
 }
-.relationships-empty {
-  font-size: 12px;
-  color: var(--ink-faint);
-  font-style: italic;
-}
 .tags-empty {
   font-size: 12px;
   color: var(--ink-faint);
@@ -847,13 +842,6 @@ body {
   align-items: center;
   gap: 6px;
 }
-.cortex-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--green);
-}
-.cortex-dot.disconnected { background: rgba(255,255,255,0.2); }
 .cortex-label {
   font-family: var(--mono);
   font-size: 8px;
@@ -1896,7 +1884,7 @@ textarea.field-value {
             <tr>
               <th>Date/Time</th>
               <th>Edited By</th>
-              <th>Contact</th>
+              <th>Item</th>
               <th>Field</th>
               <th>Old</th>
               <th>New</th>
@@ -4109,7 +4097,7 @@ let lexicon = { institution: [], department: [], building: [] };
 async function loadLexicon() {
   try {
     const { data: rows, error } = await supabaseClient
-      .from('shorthands')  // Keep table name for now
+      .from('lexicon')  
       .select('*')
       .order('full_text', { ascending: true });
     
@@ -4262,7 +4250,7 @@ async function addLexiconEntry(category) {
     }
     
     const { error } = await supabaseClient
-      .from('shorthands')  // Keep table name for now
+      .from('lexicon')  
       .insert(insertData);
     
     if (error) throw error;
@@ -4285,7 +4273,7 @@ async function removeLexiconEntry(id) {
   
   try {
     const { error } = await supabaseClient
-      .from('shorthands')  // Keep table name for now
+      .from('lexicon')  
       .delete()
       .eq('id', id);
     
@@ -4864,14 +4852,6 @@ window.INDEX = {
   version: '2.0',
 };
 
-function checkCortexLink() {
-  const cortexData = localStorage.getItem('cortex_projects');
-  const dot = document.getElementById('cortex-dot');
-  if (dot) {
-    dot.classList.toggle('disconnected', !cortexData);
-  }
-}
-
 // ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
 
 document.addEventListener('keydown', (e) => {
@@ -5024,8 +5004,6 @@ async function initApp() {
   renderAll();
   applyRolePermissions(); // Re-apply after render
   setViewMode('table');
-  checkCortexLink();
-  setInterval(checkCortexLink, 5000);
 }
 </script>
 </body>
