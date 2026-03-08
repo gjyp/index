@@ -2106,11 +2106,12 @@ const SCHEMAS = {
     labelSingular: 'Contact',
     icon: '●',
     avatarStyle: 'circle',
-    tableColumns: ['last_name', 'first_name', 'institution', 'department', 'title', 'email', 'phone_office', 'phone_cell', 'office_location'],
+    tableColumns: ['last_name', 'first_name', 'degree', 'institution', 'department', 'title', 'email', 'phone_office', 'phone_cell', 'office_location'],
     fields: [
       { group: 'Name', fields: [
         { key: 'first_name', label: 'First Name', type: 'text', placeholder: 'First name' },
         { key: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Last name' },
+        { key: 'degree', label: 'Degree', type: 'text', placeholder: 'PhD, MD, etc.' },
       ]},
       { group: 'Contact Information', fields: [
         { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
@@ -2132,7 +2133,7 @@ const SCHEMAS = {
     ],
     subtitle: item => item.institution || '',
     meta: item => item.title || '',
-    listMeta: item => [item.title, item.institution].filter(Boolean).join(' · '),
+    listMeta: item => [item.title, item.institution].filter(Boolean).join('; '),
     quickFields: ['first_name', 'last_name', 'institution', 'email'],
     suggestedTags: ['client', 'collaborator', 'vendor', 'speaker', 'press', 'team', 'vip'],
   },
@@ -2169,7 +2170,7 @@ const SCHEMAS = {
       const caps = [];
       if (item.capacity_seated) caps.push(`${item.capacity_seated} seated`);
       if (item.capacity_standing) caps.push(`${item.capacity_standing} standing`);
-      return caps.join(' · ');
+      return caps.join('; ');
     },
     listMeta: item => {
       if (item.capacity_seated) return `Seats ${item.capacity_seated}`;
@@ -2236,6 +2237,7 @@ const COLUMN_LABELS = {
   name: 'Name',
   first_name: 'First',
   last_name: 'Last',
+  degree: 'Degree',
   institution: 'Institution',
   department: 'Dept/Unit',
   organization: 'Organization',
@@ -2996,7 +2998,7 @@ function renderRelationshipResults() {
   
   container.innerHTML = contacts.map(contact => {
     const displayName = getDisplayName(contact);
-    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join(' · ');
+    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join('; ');
     const isSelected = contact.id === selectedRelationshipContactId;
     return `
       <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
@@ -3030,7 +3032,7 @@ function filterRelationshipResults() {
   
   container.innerHTML = contacts.map(contact => {
     const displayName = getDisplayName(contact);
-    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join(' · ');
+    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join('; ');
     const isSelected = contact.id === selectedRelationshipContactId;
     return `
       <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
@@ -3485,7 +3487,7 @@ function renderItemList() {
     <div class="list-item ${item.id === activeItemId ? 'active' : ''}" onclick="selectItem('${item.id}')">
       <div class="list-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}${avatarOutline}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="list-info">
-        <div class="list-name">${escHtml(getDisplayName(item))}</div>
+        <div class="list-name">${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
         <div class="list-meta">${metaHtml}</div>
       </div>
     </div>
@@ -3564,7 +3566,7 @@ function renderTable() {
               .map(aff => applyLexicon(aff.institution, 'institution'))
               .filter(Boolean);
             if (secondaryInsts.length > 0) {
-              value = [value, ...secondaryInsts].filter(Boolean).join(' · ');
+              value = [value, ...secondaryInsts].filter(Boolean).join('; ');
             }
           }
         }
@@ -3634,7 +3636,7 @@ function renderDetail() {
         const affDept = applyLexicon(aff.department, 'department');
         const affParts = [affInst, affDept].filter(Boolean).join(' | ');
         return aff.title ? `${aff.title}, ${affParts}` : affParts;
-      }).join(' · ');
+      }).join('; ');
     }
   } else {
     headerSubtitle = schema.subtitle(item);
@@ -3645,7 +3647,7 @@ function renderDetail() {
     <div class="detail-header">
       <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
       <div class="detail-title-block">
-        <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}</div>
+        <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(headerMeta)}</div>
         ${headerSecondary ? `<div class="detail-secondary-affiliations">${escHtml(headerSecondary)}</div>` : ''}
@@ -3734,7 +3736,7 @@ function renderDetail() {
             const affTitle = aff.title || '';
             const parts = [affTitle, affInst, affDept].filter(Boolean);
             if (parts.length > 0) {
-              html += `<div class="field-row"><div class="field-label"></div><div class="field-value-readonly" style="color: var(--ink-light); font-size: 12px;">${escHtml(parts.join(' · '))}</div></div>`;
+              html += `<div class="field-row"><div class="field-label"></div><div class="field-value-readonly" style="color: var(--ink-light); font-size: 12px;">${escHtml(parts.join('; '))}</div></div>`;
             }
           });
         }
