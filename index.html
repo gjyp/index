@@ -444,6 +444,9 @@ body {
 .lexicon-input.short {
   flex: 1;
 }
+.lexicon-input.address {
+  flex: 2;
+}
 .lexicon-input:focus {
   border-color: var(--ink-faint);
 }
@@ -452,6 +455,22 @@ body {
   color: var(--ink-faint);
   font-style: italic;
   padding: 8px 0;
+}
+.building-add {
+  flex-wrap: wrap;
+}
+.lexicon-address {
+  font-size: 10px;
+  color: var(--ink-light);
+  font-family: var(--mono);
+}
+.lexicon-item.building {
+  flex-wrap: wrap;
+}
+.lexicon-item.building .lexicon-address {
+  width: 100%;
+  padding-left: 0;
+  margin-top: 2px;
 }
 
 /* Relationship Preview Popup */
@@ -1872,7 +1891,7 @@ textarea.field-value {
         <button class="panel-close" onclick="closeLexiconPanel()">×</button>
       </div>
       <div class="panel-body">
-        <p class="panel-hint">Define abbreviations for institutions and departments used in compact displays.</p>
+        <p class="panel-hint">Define abbreviations and metadata for compact displays and auto-fill.</p>
         
         <div class="panel-section">
           <div class="panel-section-title">Institutions</div>
@@ -1891,6 +1910,17 @@ textarea.field-value {
             <input type="text" class="lexicon-input" id="new-lexicon-dept-full" placeholder="Full name (e.g., Department of Neurobiology)">
             <input type="text" class="lexicon-input short" id="new-lexicon-dept-short" placeholder="Short (e.g., Neuro)">
             <button class="btn" onclick="addLexiconEntry('department')">Add</button>
+          </div>
+        </div>
+        
+        <div class="panel-section">
+          <div class="panel-section-title">Buildings</div>
+          <div class="lexicon-list" id="lexicon-buildings"></div>
+          <div class="lexicon-add building-add">
+            <input type="text" class="lexicon-input" id="new-lexicon-bldg-full" placeholder="Building name (e.g., Goldenson Building)">
+            <input type="text" class="lexicon-input short" id="new-lexicon-bldg-short" placeholder="Short (e.g., Goldenson)">
+            <input type="text" class="lexicon-input address" id="new-lexicon-bldg-address" placeholder="Street address">
+            <button class="btn" onclick="addLexiconEntry('building')">Add</button>
           </div>
         </div>
       </div>
@@ -2143,9 +2173,10 @@ const SCHEMAS = {
         { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
         { key: 'phone_office', label: 'Office Phone', type: 'tel', placeholder: '+1 555 123 4567' },
         { key: 'phone_cell', label: 'Cell Phone', type: 'tel', placeholder: '+1 555 987 6543' },
+        { key: 'website', label: 'Website', type: 'url', placeholder: 'https://...' },
       ]},
       { group: 'Location', fields: [
-        { key: 'office_location', label: 'Office Location', type: 'text', placeholder: 'Building, Floor, Room' },
+        { key: 'office_location', label: 'Office Location', type: 'text', placeholder: 'Building, Floor, Room', autofillsAddress: true },
         { key: 'address', label: 'Street Address', type: 'text', placeholder: 'Street address, City' },
       ]},
       { group: 'Affiliation', fields: [
@@ -2169,6 +2200,7 @@ const SCHEMAS = {
       { group: 'Details', fields: [
         { key: 'address', label: 'Address', type: 'text', placeholder: 'Full address' },
         { key: 'neighborhood', label: 'Neighborhood', type: 'text', placeholder: 'Area or district' },
+        { key: 'website', label: 'Website', type: 'url', placeholder: 'https://...' },
       ]},
       { group: 'Capacity & Specs', fields: [
         { key: 'capacity_seated', label: 'Seated', type: 'text', placeholder: 'e.g. 80' },
@@ -2747,6 +2779,63 @@ async function saveField(key) {
   updateDetailHeader();
 }
 
+async function saveFieldWithAddressAutofill(key) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  // Initialize timestamps object if needed
+  if (!item._timestamps) item._timestamps = {};
+  
+  const el = document.getElementById('field-' + key);
+  if (!el) return;
+  
+  const oldValue = item[key] || '';
+  const newValue = el.value;
+  item[key] = newValue;
+  
+  // Update timestamp if field has content
+  if (newValue && newValue.trim()) {
+    item._timestamps[key] = new Date().toISOString();
+  }
+  
+  // Log the change if value actually changed
+  if (oldValue !== newValue) {
+    logAuditEntry(item.id, getDisplayName(item), set.name, key, oldValue, newValue);
+  }
+  
+  // Check if this building has an address in the lexicon
+  const buildingAddress = getBuildingAddress(newValue);
+  if (buildingAddress) {
+    const currentAddress = item.address || '';
+    // If address is empty or matches a known building address, auto-fill
+    // If it's custom, prompt the user
+    const isAddressFromBuilding = !currentAddress || lexicon.building.some(b => b.address === currentAddress);
+    
+    if (isAddressFromBuilding) {
+      // Auto-fill without prompting
+      item.address = buildingAddress;
+      item._timestamps['address'] = new Date().toISOString();
+      const addressEl = document.getElementById('field-address');
+      if (addressEl) addressEl.value = buildingAddress;
+    } else {
+      // Prompt user since they have a custom address
+      if (confirm(`Update street address to "${buildingAddress}"?`)) {
+        const oldAddr = item.address;
+        item.address = buildingAddress;
+        item._timestamps['address'] = new Date().toISOString();
+        logAuditEntry(item.id, getDisplayName(item), set.name, 'address', oldAddr, buildingAddress);
+        const addressEl = document.getElementById('field-address');
+        if (addressEl) addressEl.value = buildingAddress;
+      }
+    }
+  }
+  
+  await saveItem(item, set.id);
+  renderItemList();
+  updateDetailHeader();
+}
+
 async function saveTableCell(itemId, key, value) {
   const item = getItem(itemId);
   const set = getActiveSet();
@@ -2884,7 +2973,7 @@ function renderAliases() {
   (item.aliases || []).forEach((alias, i) => {
     html += `<div class="alias-row"><input type="text" class="alias-input" value="${escHtml(alias)}" onchange="updateAlias(${i}, this.value)"><button class="alias-remove" onclick="removeAlias(${i})">×</button></div>`;
   });
-  html += `<button class="add-alias-btn" onclick="addAlias()">+ Add Alias</button>`;
+  html += `<button class="add-alias-btn" onclick="addAlias()">+ Alias</button>`;
   container.innerHTML = html;
 }
 
@@ -3039,11 +3128,7 @@ function renderRelationships() {
   
   // Add relationship button (only in edit mode)
   if (editMode) {
-    html += `<button class="relationship-add-btn" onclick="openRelationshipModal()">+ Add Relationship</button>`;
-  }
-  
-  if (forward.length === 0 && reverse.length === 0) {
-    html = `<div class="relationships-empty">No relationships</div>` + html;
+    html += `<button class="relationship-add-btn" onclick="openRelationshipModal()">+ Relationship</button>`;
   }
   
   container.innerHTML = html;
@@ -3743,7 +3828,7 @@ function renderDetail() {
     <div class="detail-header">
       <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''} ${editMode ? 'editable' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}" ${editMode ? 'onclick="document.getElementById(\'avatar-color-picker\').click()"' : ''}>${getInitials(item.name, item.first_name, item.last_name)}${editMode ? `<input type="color" id="avatar-color-picker" class="avatar-color-input" value="${item.avatar_color || getAvatarColor(getDisplayName(item), null, setColor)}" onchange="saveAvatarColor(this.value)">` : ''}</div>
       <div class="detail-title-block">
-        <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
+        <div class="detail-name" id="detail-name" ${editMode && set?.schema !== 'contacts' ? 'contenteditable="true" onblur="saveField(\'name\')"' : ''}>${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(headerMeta)}</div>
         ${headerSecondary ? `<div class="detail-secondary-affiliations">${escHtml(headerSecondary)}</div>` : ''}
@@ -3770,16 +3855,22 @@ function renderDetail() {
         if (field.type === 'textarea') {
           html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><textarea class="field-value" id="field-${field.key}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${escHtml(value)}</textarea>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
         } else {
-          // Add datalist for institution and department fields
+          // Add datalist for institution, department, and office_location fields
           const listAttr = (field.key === 'institution') ? ' list="institution-options"' : 
-                          (field.key === 'department') ? ' list="department-options"' : '';
-          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><input type="${field.type}" class="field-value" id="field-${field.key}" value="${escHtml(value)}" placeholder="${escHtml(field.placeholder)}"${listAttr} onchange="saveField('${field.key}')">${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+                          (field.key === 'department') ? ' list="department-options"' : 
+                          (field.key === 'office_location') ? ' list="building-options"' : '';
+          // Use special handler for office_location to trigger address autofill
+          const changeHandler = field.autofillsAddress ? 
+            `onchange="saveFieldWithAddressAutofill('${field.key}')"` : 
+            `onchange="saveField('${field.key}')"`;
+          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><input type="${field.type === 'url' ? 'text' : field.type}" class="field-value" id="field-${field.key}" value="${escHtml(value)}" placeholder="${escHtml(field.placeholder)}"${listAttr} ${changeHandler}>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
         }
       } else {
         // Read-only mode
         if (value) {
           const displayValue = field.type === 'email' ? `<a href="mailto:${escHtml(value)}">${escHtml(value)}</a>` : 
                                field.type === 'tel' ? `<a href="tel:${escHtml(value)}">${escHtml(value)}</a>` :
+                               field.type === 'url' ? `<a href="${escHtml(value)}" target="_blank">${escHtml(value)}</a>` :
                                field.type === 'color' ? `<span class="field-color-swatch" style="background:${escHtml(value)}"></span>` :
                                escHtml(value);
           html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><div class="field-value-readonly">${displayValue}</div>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
@@ -3845,6 +3936,7 @@ function renderDetail() {
   // Add datalists for autofill
   html += `<datalist id="institution-options">${lexicon.institution.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
   html += `<datalist id="department-options">${lexicon.department.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
+  html += `<datalist id="building-options">${lexicon.building.map(sh => `<option value="${escHtml(sh.full)}">`).join('')}</datalist>`;
   
   // Notes field with timestamp
   const notesTs = timestamps['notes'];
@@ -3854,9 +3946,9 @@ function renderDetail() {
   html += `<div class="field-group"><div class="field-group-title">Relationships</div><div class="relationships-section" id="relationships-section"></div></div>`;
   
   if (editMode) {
-    html += `<div class="field-group"><div class="field-group-title">Aliases (for name matching)</div><div class="field-row"><div class="field-label">Names</div><div class="aliases-list" id="aliases-list"></div></div></div>`;
+    html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="aliases-list" id="aliases-list"></div></div>`;
   } else if (item.aliases && item.aliases.length > 0) {
-    html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="field-row"><div class="field-label">Names</div><div class="field-value-readonly">${item.aliases.map(a => escHtml(a)).join(', ')}</div></div></div>`;
+    html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="field-value-readonly">${item.aliases.map(a => escHtml(a)).join(', ')}</div></div>`;
   }
   
   html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="tags-container" id="tags-container"></div></div>`;
@@ -3937,7 +4029,7 @@ function closeSetModal() { document.getElementById('set-modal').classList.remove
 
 // ─── LEXICON ─────────────────────────────────────────────────────────────────
 
-let lexicon = { institution: [], department: [] };
+let lexicon = { institution: [], department: [], building: [] };
 
 async function loadLexicon() {
   try {
@@ -3951,13 +4043,14 @@ async function loadLexicon() {
       return;
     }
     
-    lexicon = { institution: [], department: [] };
+    lexicon = { institution: [], department: [], building: [] };
     (rows || []).forEach(row => {
-      if (row.category === 'institution' || row.category === 'department') {
+      if (row.category === 'institution' || row.category === 'department' || row.category === 'building') {
         lexicon[row.category].push({
           id: row.id,
           full: row.full_text,
-          short: row.short_text
+          short: row.short_text,
+          address: row.address || ''  // Buildings have address
         });
       }
     });
@@ -3975,6 +4068,18 @@ function applyLexicon(text, category) {
     }
   }
   return text;
+}
+
+function getBuildingAddress(buildingName) {
+  if (!buildingName) return null;
+  const list = lexicon.building || [];
+  for (const entry of list) {
+    if (buildingName.toLowerCase() === entry.full.toLowerCase() || 
+        buildingName.toLowerCase() === entry.short.toLowerCase()) {
+      return entry.address || null;
+    }
+  }
+  return null;
 }
 
 function openLexiconPanel() {
@@ -4029,33 +4134,67 @@ function renderLexicon() {
       </div>
     `).join('');
   }
+  
+  // Buildings
+  const bldgContainer = document.getElementById('lexicon-buildings');
+  if (lexicon.building.length === 0) {
+    bldgContainer.innerHTML = '<div class="lexicon-empty">No buildings</div>';
+  } else {
+    bldgContainer.innerHTML = lexicon.building.map(entry => `
+      <div class="lexicon-item building">
+        <span class="lexicon-full">${escHtml(entry.full)}</span>
+        <span class="lexicon-arrow">→</span>
+        <span class="lexicon-short">${escHtml(entry.short)}</span>
+        <span class="lexicon-remove" onclick="removeLexiconEntry('${entry.id}')" title="Remove">×</span>
+        ${entry.address ? `<span class="lexicon-address">${escHtml(entry.address)}</span>` : ''}
+      </div>
+    `).join('');
+  }
 }
 
 async function addLexiconEntry(category) {
-  const fullInput = document.getElementById(category === 'institution' ? 'new-lexicon-inst-full' : 'new-lexicon-dept-full');
-  const shortInput = document.getElementById(category === 'institution' ? 'new-lexicon-inst-short' : 'new-lexicon-dept-short');
+  let fullInput, shortInput, addressInput;
+  
+  if (category === 'institution') {
+    fullInput = document.getElementById('new-lexicon-inst-full');
+    shortInput = document.getElementById('new-lexicon-inst-short');
+  } else if (category === 'department') {
+    fullInput = document.getElementById('new-lexicon-dept-full');
+    shortInput = document.getElementById('new-lexicon-dept-short');
+  } else if (category === 'building') {
+    fullInput = document.getElementById('new-lexicon-bldg-full');
+    shortInput = document.getElementById('new-lexicon-bldg-short');
+    addressInput = document.getElementById('new-lexicon-bldg-address');
+  }
   
   const fullText = fullInput.value.trim();
   const shortText = shortInput.value.trim();
+  const address = addressInput ? addressInput.value.trim() : null;
   
   if (!fullText || !shortText) {
-    toast('Both fields are required');
+    toast('Name and abbreviation are required');
     return;
   }
   
   try {
+    const insertData = {
+      full_text: fullText,
+      short_text: shortText,
+      category: category
+    };
+    if (address) {
+      insertData.address = address;
+    }
+    
     const { error } = await supabaseClient
       .from('shorthands')  // Keep table name for now
-      .insert({
-        full_text: fullText,
-        short_text: shortText,
-        category: category
-      });
+      .insert(insertData);
     
     if (error) throw error;
     
     fullInput.value = '';
     shortInput.value = '';
+    if (addressInput) addressInput.value = '';
     await loadLexicon();
     renderLexicon();
     renderItemList();
