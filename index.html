@@ -4439,7 +4439,7 @@ async function loadAuditLogs() {
     const html = logs.map(log => `
       <tr>
         <td><span class="audit-when">${formatAuditTime(log.changed_at)}</span></td>
-        <td><span class="audit-who" title="${escHtml(log.changed_by)}">${escHtml(log.changed_by.split('@')[0])}</span></td>
+        <td><span class="audit-who" title="${escHtml(log.changed_by)}">${log.changed_by === 'mail@gjyp.app' ? 'owner' : escHtml(log.changed_by.split('@')[0])}</span></td>
         <td>
           <div class="audit-contact">${escHtml(log.item_name || '(deleted)')}</div>
           <div class="audit-contact-set">${escHtml(log.set_name || '')}</div>
