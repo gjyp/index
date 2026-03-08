@@ -967,6 +967,32 @@ body {
   flex-shrink: 0;
 }
 .detail-avatar.square { border-radius: 6px; }
+.detail-avatar.editable {
+  cursor: pointer;
+  position: relative;
+}
+.detail-avatar.editable:hover::after {
+  content: 'Click to edit color';
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-light);
+  white-space: nowrap;
+  background: var(--paper);
+  padding: 2px 6px;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.avatar-color-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
 .detail-title-block { flex: 1; }
 .detail-name {
   font-size: 20px;
@@ -2123,12 +2149,7 @@ const SCHEMAS = {
         { key: 'address', label: 'Street Address', type: 'text', placeholder: 'Street address, City' },
       ]},
       { group: 'Affiliation', fields: [
-        { key: 'institution', label: 'Institution', type: 'text', placeholder: 'University or organization' },
-        { key: 'department', label: 'Department / Unit', type: 'text', placeholder: 'Department or unit' },
-        { key: 'title', label: 'Title', type: 'text', placeholder: 'Job title' },
-      ]},
-      { group: 'Appearance', fields: [
-        { key: 'avatar_color', label: 'Avatar Color', type: 'color', placeholder: '' },
+        // All affiliations are now managed as draggable items, no fixed fields
       ]},
     ],
     subtitle: item => item.institution || '',
@@ -2321,15 +2342,39 @@ async function loadFromSupabase() {
       suggestedTags: set.suggested_tags || [],
       items: items
         .filter(item => item.set_id === set.id)
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          aliases: item.aliases || [],
-          tags: item.tags || [],
-          notes: item.notes || '',
-          _timestamps: item.timestamps || {},
-          ...(item.data || {})
-        }))
+        .map(item => {
+          const itemData = {
+            id: item.id,
+            name: item.name,
+            aliases: item.aliases || [],
+            tags: item.tags || [],
+            notes: item.notes || '',
+            _timestamps: item.timestamps || {},
+            ...(item.data || {})
+          };
+          
+          // Migration: if old institution/department/title exist but affiliations doesn't,
+          // migrate them to affiliations[0]
+          if (set.schema === 'contacts') {
+            if (!itemData.affiliations || itemData.affiliations.length === 0) {
+              if (itemData.institution || itemData.department || itemData.title) {
+                itemData.affiliations = [{
+                  institution: itemData.institution || '',
+                  department: itemData.department || '',
+                  title: itemData.title || ''
+                }];
+              } else {
+                itemData.affiliations = [];
+              }
+            }
+            // Clean up old fields (they now live in affiliations)
+            delete itemData.institution;
+            delete itemData.department;
+            delete itemData.title;
+          }
+          
+          return itemData;
+        })
     }));
     
     if (data.sets.length) {
@@ -2730,6 +2775,32 @@ async function saveTableCell(itemId, key, value) {
   renderItemList();
 }
 
+// ─── AVATAR COLOR ────────────────────────────────────────────────────────────
+
+async function saveAvatarColor(color) {
+  const item = getItem(activeItemId);
+  const set = getActiveSet();
+  if (!item || !set) return;
+  
+  const oldValue = item.avatar_color || '';
+  item.avatar_color = color;
+  
+  // Log the change
+  if (oldValue !== color) {
+    logAuditEntry(item.id, getDisplayName(item), set.name, 'avatar_color', oldValue, color);
+  }
+  
+  await saveItem(item, set.id);
+  
+  // Update avatar display immediately
+  const avatar = document.getElementById('detail-avatar');
+  if (avatar) {
+    avatar.style.background = color;
+  }
+  
+  renderItemList();
+}
+
 // ─── AFFILIATIONS ────────────────────────────────────────────────────────────
 
 let draggedAffiliationIndex = null;
@@ -2998,7 +3069,8 @@ function renderRelationshipResults() {
   
   container.innerHTML = contacts.map(contact => {
     const displayName = getDisplayName(contact);
-    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join('; ');
+    const primary = (contact.affiliations || [])[0] || {};
+    const meta = [primary.title, primary.institution, contact.setName].filter(Boolean).join('; ');
     const isSelected = contact.id === selectedRelationshipContactId;
     return `
       <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
@@ -3017,8 +3089,9 @@ function filterRelationshipResults() {
   if (query) {
     contacts = contacts.filter(c => {
       const name = getDisplayName(c).toLowerCase();
-      const institution = (c.institution || '').toLowerCase();
-      const title = (c.title || '').toLowerCase();
+      const primary = (c.affiliations || [])[0] || {};
+      const institution = (primary.institution || '').toLowerCase();
+      const title = (primary.title || '').toLowerCase();
       return name.includes(query) || institution.includes(query) || title.includes(query);
     });
   }
@@ -3032,7 +3105,8 @@ function filterRelationshipResults() {
   
   container.innerHTML = contacts.map(contact => {
     const displayName = getDisplayName(contact);
-    const meta = [contact.title, contact.institution, contact.setName].filter(Boolean).join('; ');
+    const primary = (contact.affiliations || [])[0] || {};
+    const meta = [primary.title, primary.institution, contact.setName].filter(Boolean).join('; ');
     const isSelected = contact.id === selectedRelationshipContactId;
     return `
       <div class="relationship-result ${isSelected ? 'selected' : ''}" onclick="selectRelationshipContact('${contact.id}')">
@@ -3111,11 +3185,12 @@ function showRelationshipPreview(event, contactId) {
   
   const preview = document.getElementById('relationship-preview');
   const displayName = getDisplayName(contact);
+  const primary = (contact.affiliations || [])[0] || {};
   
   let html = `<div class="preview-name">${escHtml(displayName)}</div>`;
-  if (contact.title) html += `<div class="preview-title">${escHtml(contact.title)}</div>`;
-  if (contact.department) html += `<div class="preview-field">${escHtml(applyLexicon(contact.department, 'department'))}</div>`;
-  if (contact.institution) html += `<div class="preview-field">${escHtml(applyLexicon(contact.institution, 'institution'))}</div>`;
+  if (primary.title) html += `<div class="preview-title">${escHtml(primary.title)}</div>`;
+  if (primary.department) html += `<div class="preview-field">${escHtml(applyLexicon(primary.department, 'department'))}</div>`;
+  if (primary.institution) html += `<div class="preview-field">${escHtml(applyLexicon(primary.institution, 'institution'))}</div>`;
   if (contact.email) html += `<div class="preview-field"><a href="mailto:${escHtml(contact.email)}">${escHtml(contact.email)}</a></div>`;
   if (contact.phone_office) html += `<div class="preview-field">Office: ${escHtml(contact.phone_office)}</div>`;
   if (contact.phone_cell) html += `<div class="preview-field">Cell: ${escHtml(contact.phone_cell)}</div>`;
@@ -3459,9 +3534,12 @@ function renderItemList() {
     
     // For contacts schema, show title on line 1, institution | department on line 2
     if (set?.schema === 'contacts') {
-      const title = item.title || '';
-      const inst = applyLexicon(item.institution, 'institution');
-      const dept = applyLexicon(item.department, 'department');
+      const affiliations = item.affiliations || [];
+      const primary = affiliations[0] || {};
+      
+      const title = primary.title || '';
+      const inst = applyLexicon(primary.institution, 'institution');
+      const dept = applyLexicon(primary.department, 'department');
       const affiliation = [inst, dept].filter(Boolean).join(' | ');
       
       if (title) metaHtml += `<div class="list-meta-line">${escHtml(title)}</div>`;
@@ -3556,13 +3634,27 @@ function renderTable() {
         }
       } else {
         let value = item[col] || '';
+        
+        // For contacts, get affiliation data from affiliations array
+        const affiliations = item.affiliations || [];
+        const primary = affiliations[0] || {};
+        
+        // Use affiliations[0] for institution, department, title columns
+        if (col === 'institution') {
+          value = primary.institution || '';
+        } else if (col === 'department') {
+          value = primary.department || '';
+        } else if (col === 'title') {
+          value = primary.title || '';
+        }
+        
         // Apply lexicon for institution and department columns in display
         if (!editMode && (col === 'institution' || col === 'department')) {
           value = applyLexicon(value, col === 'institution' ? 'institution' : 'department');
           
           // For institution column, also append secondary affiliations
-          if (col === 'institution' && item.affiliations && item.affiliations.length > 0) {
-            const secondaryInsts = item.affiliations
+          if (col === 'institution' && affiliations.length > 1) {
+            const secondaryInsts = affiliations.slice(1)
               .map(aff => applyLexicon(aff.institution, 'institution'))
               .filter(Boolean);
             if (secondaryInsts.length > 0) {
@@ -3571,7 +3663,9 @@ function renderTable() {
           }
         }
         if (editMode) {
-          rowHtml += `<td><input class="cell-input" value="${escHtml(item[col] || '')}" placeholder="${escHtml(COLUMN_LABELS[col] || col)}" onchange="saveTableCell('${item.id}', '${col}', this.value)"></td>`;
+          // In edit mode, show primary affiliation values but mark as non-editable here
+          // (editing happens in card view)
+          rowHtml += `<td><div class="cell-content"><span class="cell-text">${escHtml(value) || '—'}</span></div></td>`;
         } else {
           if (value) {
             rowHtml += `<td><div class="cell-content"><span class="cell-text">${escHtml(value)}</span>${tsDisplay ? `<span class="cell-timestamp">${tsDisplay}</span>` : ''}</div></td>`;
@@ -3623,15 +3717,17 @@ function renderDetail() {
   let headerSecondary = ''; // Line 3 under name (additional affiliations)
   
   if (set?.schema === 'contacts') {
-    headerSubtitle = item.title || '';
-    const inst = applyLexicon(item.institution, 'institution');
-    const dept = applyLexicon(item.department, 'department');
+    const affiliations = item.affiliations || [];
+    const primary = affiliations[0] || {};
+    
+    headerSubtitle = primary.title || '';
+    const inst = applyLexicon(primary.institution, 'institution');
+    const dept = applyLexicon(primary.department, 'department');
     headerMeta = [inst, dept].filter(Boolean).join(' | ');
     
-    // Build secondary affiliations line
-    const affiliations = item.affiliations || [];
-    if (affiliations.length > 0) {
-      headerSecondary = affiliations.map(aff => {
+    // Build secondary affiliations line (skip first)
+    if (affiliations.length > 1) {
+      headerSecondary = affiliations.slice(1).map(aff => {
         const affInst = applyLexicon(aff.institution, 'institution');
         const affDept = applyLexicon(aff.department, 'department');
         const affParts = [affInst, affDept].filter(Boolean).join(' | ');
@@ -3645,7 +3741,7 @@ function renderDetail() {
   
   let html = `
     <div class="detail-header">
-      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}">${getInitials(item.name, item.first_name, item.last_name)}</div>
+      <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''} ${editMode ? 'editable' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}" ${editMode ? 'onclick="document.getElementById(\'avatar-color-picker\').click()"' : ''}>${getInitials(item.name, item.first_name, item.last_name)}${editMode ? `<input type="color" id="avatar-color-picker" class="avatar-color-input" value="${item.avatar_color || getAvatarColor(getDisplayName(item), null, setColor)}" onchange="saveAvatarColor(this.value)">` : ''}</div>
       <div class="detail-title-block">
         <div class="detail-name" id="detail-name">${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
@@ -3792,9 +3888,11 @@ function updateDetailHeader() {
   const metaEl = document.getElementById('detail-meta');
   
   if (set?.schema === 'contacts') {
-    if (subtitleEl) subtitleEl.textContent = item.title || '';
-    const inst = applyLexicon(item.institution, 'institution');
-    const dept = applyLexicon(item.department, 'department');
+    const affiliations = item.affiliations || [];
+    const primary = affiliations[0] || {};
+    if (subtitleEl) subtitleEl.textContent = primary.title || '';
+    const inst = applyLexicon(primary.institution, 'institution');
+    const dept = applyLexicon(primary.department, 'department');
     if (metaEl) metaEl.textContent = [inst, dept].filter(Boolean).join(' | ');
   } else {
     if (subtitleEl) subtitleEl.textContent = schema.subtitle(item);
