@@ -2731,6 +2731,14 @@ function selectItem(id) {
   renderDetail();
 }
 
+function openItemFromTable(id) {
+  // Only in view mode, not edit mode
+  if (editMode) return;
+  
+  activeItemId = id;
+  setViewMode('card');
+}
+
 // ─── VIEW MODE ───────────────────────────────────────────────────────────────
 
 function setViewMode(mode) {
@@ -3750,7 +3758,7 @@ function renderTable() {
   
   tbody.innerHTML = filtered.map(item => {
     const timestamps = item._timestamps || {};
-    let rowHtml = `<tr data-id="${item.id}">`;
+    let rowHtml = `<tr data-id="${item.id}" onclick="openItemFromTable('${item.id}')" style="cursor: pointer;">`;
     
     columns.forEach(col => {
       const ts = timestamps[col];
