@@ -1023,6 +1023,13 @@ body {
   padding-bottom: 2px;
 }
 .detail-name:focus { border-bottom-color: var(--ink-faint); }
+.detail-name[contenteditable="true"] {
+  cursor: text;
+  border-bottom: 1px dashed var(--rule);
+}
+.detail-name[contenteditable="true"]:hover {
+  border-bottom-color: var(--ink-faint);
+}
 .detail-subtitle {
   font-size: 13px;
   color: var(--ink-mid);
@@ -1907,7 +1914,7 @@ textarea.field-value {
           <div class="panel-section-title">Departments / Units</div>
           <div class="lexicon-list" id="lexicon-departments"></div>
           <div class="lexicon-add">
-            <input type="text" class="lexicon-input" id="new-lexicon-dept-full" placeholder="Full name (e.g., Department of Neurobiology)">
+            <input type="text" class="lexicon-input" id="new-lexicon-dept-full" placeholder="Full name (e.g., Neurobiology)">
             <input type="text" class="lexicon-input short" id="new-lexicon-dept-short" placeholder="Short (e.g., Neuro)">
             <button class="btn" onclick="addLexiconEntry('department')">Add</button>
           </div>
@@ -1918,7 +1925,7 @@ textarea.field-value {
           <div class="lexicon-list" id="lexicon-buildings"></div>
           <div class="lexicon-add building-add">
             <input type="text" class="lexicon-input" id="new-lexicon-bldg-full" placeholder="Building name (e.g., Goldenson Building)">
-            <input type="text" class="lexicon-input short" id="new-lexicon-bldg-short" placeholder="Short (e.g., Goldenson)">
+            <input type="text" class="lexicon-input short" id="new-lexicon-bldg-short" placeholder="Short (e.g., GB)">
             <input type="text" class="lexicon-input address" id="new-lexicon-bldg-address" placeholder="Street address">
             <button class="btn" onclick="addLexiconEntry('building')">Add</button>
           </div>
@@ -3828,7 +3835,7 @@ function renderDetail() {
     <div class="detail-header">
       <div class="detail-avatar ${schema.avatarStyle === 'square' ? 'square' : ''} ${editMode ? 'editable' : ''}" id="detail-avatar" style="background: ${getAvatarColor(getDisplayName(item), item.avatar_color, setColor)}" ${editMode ? 'onclick="document.getElementById(\'avatar-color-picker\').click()"' : ''}>${getInitials(item.name, item.first_name, item.last_name)}${editMode ? `<input type="color" id="avatar-color-picker" class="avatar-color-input" value="${item.avatar_color || getAvatarColor(getDisplayName(item), null, setColor)}" onchange="saveAvatarColor(this.value)">` : ''}</div>
       <div class="detail-title-block">
-        <div class="detail-name" id="detail-name" ${editMode && set?.schema !== 'contacts' ? 'contenteditable="true" onblur="saveField(\'name\')"' : ''}>${escHtml(getDisplayName(item))}${item.degree ? ', ' + escHtml(item.degree) : ''}</div>
+        <div class="detail-name" id="detail-name" ${editMode && set?.schema !== 'contacts' ? 'contenteditable="true" onblur="saveField(\'name\')"' : ''}>${escHtml(getDisplayName(item))}${set?.schema === 'contacts' && item.degree ? ', ' + escHtml(item.degree) : ''}</div>
         <div class="detail-subtitle" id="detail-subtitle">${escHtml(headerSubtitle)}</div>
         <div class="detail-meta" id="detail-meta">${escHtml(headerMeta)}</div>
         ${headerSecondary ? `<div class="detail-secondary-affiliations">${escHtml(headerSecondary)}</div>` : ''}
