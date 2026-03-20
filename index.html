@@ -468,6 +468,153 @@ body {
   margin-top: 2px;
 }
 
+/* Object Codes */
+.object-codes-list {
+  margin-bottom: 12px;
+}
+.object-code-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+.object-code-item:last-child {
+  border-bottom: none;
+}
+.object-code-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 50px;
+}
+.object-code-desc {
+  flex: 1;
+  color: var(--ink-light);
+}
+.object-code-remove {
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.object-code-remove:hover {
+  color: var(--red);
+}
+.object-codes-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.object-codes-empty {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* Quick Strings (Billing Codes) */
+.quick-strings-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.quick-string-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  margin-bottom: 6px;
+}
+.quick-string-label {
+  font-size: 11px;
+  color: var(--ink-light);
+  min-width: 100px;
+}
+.quick-string-code {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+.quick-string-copy {
+  font-family: var(--sans);
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.quick-string-copy:hover {
+  background: var(--teal);
+  color: var(--white);
+  border-color: var(--teal);
+}
+.quick-string-copy.copied {
+  background: var(--green);
+  color: var(--white);
+  border-color: var(--green);
+}
+.quick-string-remove {
+  font-size: 14px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.quick-string-remove:hover {
+  color: var(--red);
+}
+.add-quick-string-btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-light);
+  background: none;
+  border: 1px dashed var(--rule);
+  padding: 8px 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.15s;
+}
+.add-quick-string-btn:hover {
+  border-color: var(--ink-light);
+  color: var(--ink);
+}
+
+/* Object Picker */
+.object-picker-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--rule);
+}
+.object-picker-item:last-child {
+  border-bottom: none;
+}
+.object-picker-item:hover {
+  background: var(--paper);
+}
+.object-picker-code {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 50px;
+}
+.object-picker-desc {
+  font-size: 13px;
+  color: var(--ink-light);
+}
+.object-picker-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
 /* Relationship Preview Popup */
 .relationship-preview {
   position: fixed;
@@ -1217,6 +1364,9 @@ textarea.field-value {
   resize: vertical;
   line-height: 1.5;
 }
+select.field-value {
+  cursor: pointer;
+}
 
 .field-with-timestamp {
   flex: 1;
@@ -1848,7 +1998,8 @@ textarea.field-value {
     <div id="main-toolbar">
       <div class="toolbar-title" id="toolbar-title">Contacts</div>
       <div class="toolbar-spacer"></div>
-      <button class="toolbar-btn" onclick="openImportModal()">Import</button>
+      <button class="toolbar-btn" id="object-codes-btn" onclick="openObjectCodesPanel()" style="display: none;">Object Codes</button>
+      <button class="toolbar-btn" id="import-btn" onclick="openImportModal()">Import</button>
       <div class="view-toggle">
         <button class="view-toggle-btn" id="view-card-btn" onclick="setViewMode('card')">Card</button>
         <button class="view-toggle-btn active" id="view-table-btn" onclick="setViewMode('table')">Table</button>
@@ -1935,6 +2086,23 @@ textarea.field-value {
             <input type="text" class="lexicon-input address" id="new-lexicon-bldg-address" placeholder="Street address">
             <button class="btn" onclick="addLexiconEntry('building')">Add</button>
           </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Object Codes Panel -->
+    <div class="panel-view" id="object-codes-panel" style="display: none;">
+      <div class="panel-header">
+        <div class="panel-title">Object Codes</div>
+        <button class="panel-close" onclick="closeObjectCodesPanel()">×</button>
+      </div>
+      <div class="panel-body">
+        <p class="panel-hint">Object codes are inserted into billing code strings for specific expense types.</p>
+        <div class="object-codes-list" id="object-codes-list"></div>
+        <div class="object-codes-add">
+          <input type="text" class="lexicon-input short" id="new-object-code" placeholder="Code">
+          <input type="text" class="lexicon-input" id="new-object-desc" placeholder="Description">
+          <button class="btn" onclick="addObjectCode()">Add</button>
         </div>
       </div>
     </div>
@@ -2151,6 +2319,17 @@ textarea.field-value {
 <!-- RELATIONSHIP PREVIEW POPUP -->
 <div class="relationship-preview" id="relationship-preview"></div>
 
+<!-- OBJECT CODE PICKER MODAL -->
+<div class="modal-overlay" id="object-picker-modal" onclick="if(event.target===this)closeObjectPicker()">
+  <div class="modal" style="width: 400px;">
+    <div class="modal-head">
+      <div class="modal-title">Select Object Code</div>
+      <button class="modal-close" onclick="closeObjectPicker()">×</button>
+    </div>
+    <div class="modal-body" id="object-picker-list" style="max-height: 400px; overflow-y: auto;"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -2280,6 +2459,33 @@ const SCHEMAS = {
     suggestedTags: ['catering', 'photo', 'video', 'flowers', 'av', 'rental', 'print', 'staffing'],
   },
   
+  billing_codes: {
+    label: 'Billing Codes',
+    labelSingular: 'Billing Code',
+    icon: '▣',
+    avatarStyle: 'square',
+    tableColumns: ['name', 'tub', 'org', 'fund', 'act', 'subact', 'root', 'designation'],
+    fields: [
+      { group: 'Code Segments', fields: [
+        { key: 'tub', label: 'TUB', type: 'text', placeholder: '3 digits' },
+        { key: 'org', label: 'Org', type: 'text', placeholder: '5 digits' },
+        { key: 'fund', label: 'Fund', type: 'text', placeholder: '6 digits' },
+        { key: 'act', label: 'Activity', type: 'text', placeholder: '6 digits' },
+        { key: 'subact', label: 'Sub-Activity', type: 'text', placeholder: '4 digits' },
+        { key: 'root', label: 'Root', type: 'text', placeholder: '5 digits' },
+      ]},
+      { group: 'Details', fields: [
+        { key: 'designation', label: 'Type', type: 'select', options: ['', 'gift', 'endowed'], placeholder: 'Select type' },
+      ]},
+    ],
+    subtitle: item => [item.tub, item.org, item.fund].filter(Boolean).join('-'),
+    meta: item => item.designation || '',
+    listMeta: item => [item.tub, item.org, item.fund].filter(Boolean).join('-'),
+    quickFields: ['name', 'tub', 'org', 'fund', 'act', 'subact', 'root'],
+    suggestedTags: [],
+    customToolbarButton: { label: 'Object Codes', action: 'openObjectCodesPanel' },
+  },
+  
   generic: {
     label: 'Items',
     labelSingular: 'Item',
@@ -2318,6 +2524,13 @@ const COLUMN_LABELS = {
   office: 'Office',
   office_location: 'Office Location',
   address: 'Address',
+  tub: 'TUB',
+  org: 'Org',
+  fund: 'Fund',
+  act: 'Activity',
+  subact: 'Sub-Act',
+  root: 'Root',
+  designation: 'Type',
   neighborhood: 'Neighborhood',
   capacity_seated: 'Seated',
   capacity_standing: 'Standing',
@@ -3924,6 +4137,9 @@ function renderDetail() {
       if (editMode) {
         if (field.type === 'textarea') {
           html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><textarea class="field-value" id="field-${field.key}" placeholder="${escHtml(field.placeholder)}" onchange="saveField('${field.key}')">${escHtml(value)}</textarea>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+        } else if (field.type === 'select') {
+          const options = field.options.map(opt => `<option value="${escHtml(opt)}" ${value === opt ? 'selected' : ''}>${opt || '—'}</option>`).join('');
+          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><select class="field-value" id="field-${field.key}" onchange="saveField('${field.key}')">${options}</select>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
         } else {
           // Add datalist for institution, department, and office_location fields
           const listAttr = (field.key === 'institution') ? ' list="institution-options"' : 
@@ -4029,6 +4245,11 @@ function renderDetail() {
     html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><div class="field-value-readonly" style="white-space: pre-wrap;">${escHtml(item.notes)}</div>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
   }
   
+  // Quick Strings for billing codes
+  if (set?.schema === 'billing_codes') {
+    html += renderQuickStrings(item);
+  }
+  
   html += `</div>`;
   
   detail.innerHTML = html;
@@ -4069,6 +4290,12 @@ function renderAll() {
   renderItemList();
   if (viewMode === 'table') renderTable();
   else renderDetail();
+  
+  // Update toolbar buttons based on schema
+  const set = getActiveSet();
+  const isBillingCodes = set?.schema === 'billing_codes';
+  document.getElementById('object-codes-btn').style.display = isBillingCodes ? '' : 'none';
+  document.getElementById('import-btn').style.display = isBillingCodes ? 'none' : '';
 }
 
 // ─── MODALS ──────────────────────────────────────────────────────────────────
@@ -4294,6 +4521,217 @@ async function removeLexiconEntry(id) {
     console.error('Remove lexicon entry error:', err);
     toast('Failed to remove entry');
   }
+}
+
+// ─── OBJECT CODES ─────────────────────────────────────────────────────────────
+
+let objectCodes = [];
+
+async function loadObjectCodes() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('object_codes')
+      .select('*')
+      .order('code');
+    
+    if (error) throw error;
+    objectCodes = data || [];
+  } catch (err) {
+    console.error('Load object codes error:', err);
+  }
+}
+
+function openObjectCodesPanel() {
+  document.getElementById('detail-view').classList.remove('visible');
+  document.getElementById('table-view').classList.remove('visible');
+  document.getElementById('lexicon-panel').style.display = 'none';
+  document.getElementById('audit-panel').style.display = 'none';
+  document.getElementById('object-codes-panel').style.display = 'flex';
+  document.getElementById('empty-state').style.display = 'none';
+  renderObjectCodesList();
+}
+
+function closeObjectCodesPanel() {
+  document.getElementById('object-codes-panel').style.display = 'none';
+  if (viewMode === 'card') {
+    if (activeItemId) {
+      document.getElementById('detail-view').classList.add('visible');
+    } else {
+      document.getElementById('empty-state').style.display = 'flex';
+    }
+  } else {
+    document.getElementById('table-view').classList.add('visible');
+  }
+}
+
+function renderObjectCodesList() {
+  const container = document.getElementById('object-codes-list');
+  if (objectCodes.length === 0) {
+    container.innerHTML = '<div class="object-codes-empty">No object codes defined</div>';
+    return;
+  }
+  container.innerHTML = objectCodes.map(obj => `
+    <div class="object-code-item">
+      <div class="object-code-value">${escHtml(obj.code)}</div>
+      <div class="object-code-desc">${escHtml(obj.description)}</div>
+      <span class="object-code-remove" onclick="removeObjectCode('${obj.id}')">×</span>
+    </div>
+  `).join('');
+}
+
+async function addObjectCode() {
+  const codeInput = document.getElementById('new-object-code');
+  const descInput = document.getElementById('new-object-desc');
+  const code = codeInput.value.trim();
+  const description = descInput.value.trim();
+  
+  if (!code || !description) {
+    toast('Enter code and description');
+    return;
+  }
+  
+  if (objectCodes.find(o => o.code === code)) {
+    toast('Code already exists');
+    return;
+  }
+  
+  try {
+    const { error } = await supabaseClient
+      .from('object_codes')
+      .insert({ code, description });
+    
+    if (error) throw error;
+    
+    codeInput.value = '';
+    descInput.value = '';
+    await loadObjectCodes();
+    renderObjectCodesList();
+    toast('Object code added');
+  } catch (err) {
+    console.error('Add object code error:', err);
+    toast('Failed to add object code');
+  }
+}
+
+async function removeObjectCode(id) {
+  try {
+    const { error } = await supabaseClient
+      .from('object_codes')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    await loadObjectCodes();
+    renderObjectCodesList();
+    toast('Object code removed');
+  } catch (err) {
+    console.error('Remove object code error:', err);
+    toast('Failed to remove object code');
+  }
+}
+
+// Quick Strings for Billing Codes
+function buildFullBillingCode(item, objectCode) {
+  const parts = [item.tub, item.org];
+  if (objectCode) parts.push(objectCode);
+  parts.push(item.fund, item.act, item.subact, item.root);
+  return parts.filter(Boolean).join('-');
+}
+
+function getObjectCodeDesc(code) {
+  const obj = objectCodes.find(o => o.code === code);
+  return obj ? obj.description : code;
+}
+
+function renderQuickStrings(item) {
+  const quickStrings = item.quick_strings || [];
+  if (quickStrings.length === 0 && !editMode) {
+    return '';
+  }
+  
+  let html = '<div class="quick-strings-section">';
+  html += '<div class="field-group-title">Quick Copy (with Object Code)</div>';
+  
+  quickStrings.forEach((objCode, index) => {
+    const fullCode = buildFullBillingCode(item, objCode);
+    const desc = getObjectCodeDesc(objCode);
+    html += `
+      <div class="quick-string-item">
+        <div class="quick-string-label">${escHtml(desc)}</div>
+        <div class="quick-string-code">${escHtml(fullCode)}</div>
+        <button class="quick-string-copy" onclick="copyQuickString('${escHtml(fullCode)}', this)">Copy</button>
+        ${editMode ? `<span class="quick-string-remove" onclick="removeQuickString(${index})">×</span>` : ''}
+      </div>
+    `;
+  });
+  
+  if (editMode) {
+    html += '<button class="add-quick-string-btn" onclick="openObjectPicker()">+ Add String</button>';
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+async function copyQuickString(str, btnEl) {
+  await navigator.clipboard.writeText(str);
+  btnEl.textContent = 'Copied';
+  btnEl.classList.add('copied');
+  setTimeout(() => {
+    btnEl.textContent = 'Copy';
+    btnEl.classList.remove('copied');
+  }, 1500);
+}
+
+function openObjectPicker() {
+  const item = getItem(activeItemId);
+  if (!item) return;
+  
+  const quickStrings = item.quick_strings || [];
+  const available = objectCodes.filter(o => !quickStrings.includes(o.code));
+  
+  const container = document.getElementById('object-picker-list');
+  if (available.length === 0) {
+    container.innerHTML = '<div class="object-picker-empty">All object codes added</div>';
+  } else {
+    container.innerHTML = available.map(obj => `
+      <div class="object-picker-item" onclick="addQuickString('${escHtml(obj.code)}')">
+        <div class="object-picker-code">${escHtml(obj.code)}</div>
+        <div class="object-picker-desc">${escHtml(obj.description)}</div>
+      </div>
+    `).join('');
+  }
+  
+  document.getElementById('object-picker-modal').classList.add('open');
+}
+
+function closeObjectPicker() {
+  document.getElementById('object-picker-modal').classList.remove('open');
+}
+
+async function addQuickString(objectCode) {
+  const item = getItem(activeItemId);
+  if (!item) return;
+  
+  if (!item.quick_strings) item.quick_strings = [];
+  if (!item.quick_strings.includes(objectCode)) {
+    item.quick_strings.push(objectCode);
+    await saveItem(item);
+    closeObjectPicker();
+    renderDetail();
+    toast('Quick string added');
+  }
+}
+
+async function removeQuickString(index) {
+  const item = getItem(activeItemId);
+  if (!item || !item.quick_strings) return;
+  
+  item.quick_strings.splice(index, 1);
+  await saveItem(item);
+  renderDetail();
+  toast('Quick string removed');
 }
 
 // ─── USER ROLES ──────────────────────────────────────────────────────────────
@@ -5006,6 +5444,12 @@ async function initApp() {
     await loadLexicon();
   } catch (err) {
     console.error('[INDEX] Failed to load lexicon:', err);
+  }
+  
+  try {
+    await loadObjectCodes();
+  } catch (err) {
+    console.error('[INDEX] Failed to load object codes:', err);
   }
   
   renderAll();
