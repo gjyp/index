@@ -2475,8 +2475,8 @@ const SCHEMAS = {
         { key: 'subact', label: 'Sub-Activity', type: 'text', placeholder: '4 digits' },
         { key: 'root', label: 'Root', type: 'text', placeholder: '5 digits' },
       ]},
-      { group: 'Type', fields: [
-        { key: 'designation', label: 'Designation', type: 'select', options: ['', 'gift', 'endowed'], placeholder: 'Select type' },
+      { group: 'Designation', fields: [
+        { key: 'designation', label: 'Type', type: 'select', options: ['', 'gift', 'endowed'], placeholder: 'Select type' },
       ]},
     ],
     subtitle: item => '',
@@ -3960,7 +3960,7 @@ function renderTable() {
     const arrow = isSorted ? (sortAsc ? '↑' : '↓') : '↕';
     headerHtml += `<th class="sortable ${isSorted ? 'sorted' : ''}" onclick="setSortColumn('${col}')">${escHtml(label)}<span class="sort-icon">${arrow}</span></th>`;
   });
-  headerHtml += '<th>Tags</th>';
+  if (!schema.hideTags) headerHtml += '<th>Tags</th>';
   if (editMode) headerHtml += '<th></th>'; // Actions column
   headerHtml += '</tr>';
   thead.innerHTML = headerHtml;
@@ -4048,9 +4048,11 @@ function renderTable() {
       }
     });
     
-    // Tags column
-    const tags = item.tags || [];
-    rowHtml += `<td><div class="cell-tags">${tags.map(t => `<span class="cell-tag">${escHtml(t)}</span>`).join('')}</div></td>`;
+    // Tags column (unless hidden by schema)
+    if (!schema.hideTags) {
+      const tags = item.tags || [];
+      rowHtml += `<td><div class="cell-tags">${tags.map(t => `<span class="cell-tag">${escHtml(t)}</span>`).join('')}</div></td>`;
+    }
     
     // Actions column (edit mode only)
     if (editMode) {
@@ -4164,8 +4166,11 @@ function renderDetail() {
                                field.type === 'color' ? `<span class="field-color-swatch" style="background:${escHtml(value)}"></span>` :
                                escHtml(value);
           html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><div class="field-value-readonly">${displayValue}</div>${tsDisplay ? `<span class="field-timestamp">Updated ${tsDisplay}</span>` : ''}</div></div>`;
+        } else if (field.key === 'designation' && field.type === 'select') {
+          // Show placeholder for empty designation
+          html += `<div class="field-row"><div class="field-label">${escHtml(field.label)}</div><div class="field-with-timestamp"><div class="field-value-readonly" style="color: var(--ink-faint); font-style: italic;">type not selected</div></div></div>`;
         }
-        // Skip empty fields in read-only mode
+        // Skip other empty fields in read-only mode
       }
     });
     
