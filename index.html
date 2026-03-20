@@ -2170,11 +2170,11 @@ select.field-value {
       <div class="modal-field">
         <label class="modal-label">Schema Template</label>
         <select class="modal-select" id="new-set-schema">
-          <option value="contacts">Contacts (name, email, phone, office)</option>
-          <option value="venues">Venues (name, address, capacity)</option>
-          <option value="vendors">Vendors (name, service, contact, rate)</option>
-          <option value="billing_codes">Billing Codes (TUB, org, fund, activity)</option>
-          <option value="generic">Generic (name, notes)</option>
+          <option value="contacts">Contacts</option>
+          <option value="venues">Venues</option>
+          <option value="vendors">Vendors</option>
+          <option value="billing_codes">Billing Codes</option>
+          <option value="generic">Generic</option>
         </select>
       </div>
       <div class="modal-field">
@@ -2475,15 +2475,18 @@ const SCHEMAS = {
         { key: 'subact', label: 'Sub-Activity', type: 'text', placeholder: '4 digits' },
         { key: 'root', label: 'Root', type: 'text', placeholder: '5 digits' },
       ]},
-      { group: 'Details', fields: [
-        { key: 'designation', label: 'Type', type: 'select', options: ['', 'gift', 'endowed'], placeholder: 'Select type' },
+      { group: 'Type', fields: [
+        { key: 'designation', label: 'Designation', type: 'select', options: ['', 'gift', 'endowed'], placeholder: 'Select type' },
       ]},
     ],
-    subtitle: item => [item.tub, item.org, item.fund].filter(Boolean).join('-'),
+    subtitle: item => '',
     meta: item => item.designation || '',
-    listMeta: item => [item.tub, item.org, item.fund].filter(Boolean).join('-'),
+    listMeta: item => item.designation || '',
     quickFields: ['name', 'tub', 'org', 'fund', 'act', 'subact', 'root'],
     suggestedTags: [],
+    hideRelationships: true,
+    hideTags: true,
+    hideNotes: true,
     customToolbarButton: { label: 'Object Codes', action: 'openObjectCodesPanel' },
   },
   
@@ -4229,21 +4232,31 @@ function renderDetail() {
   const notesTs = timestamps['notes'];
   const notesTsDisplay = (item.notes && notesTs) ? formatTimestamp(notesTs) : '';
   
-  // Relationships section
-  html += `<div class="field-group"><div class="field-group-title">Relationships</div><div class="relationships-section" id="relationships-section"></div></div>`;
-  
-  if (editMode) {
-    html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="aliases-list" id="aliases-list"></div></div>`;
-  } else if (item.aliases && item.aliases.length > 0) {
-    html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="field-value-readonly">${item.aliases.map(a => escHtml(a)).join(', ')}</div></div>`;
+  // Relationships section (unless hidden by schema)
+  if (!schema.hideRelationships) {
+    html += `<div class="field-group"><div class="field-group-title">Relationships</div><div class="relationships-section" id="relationships-section"></div></div>`;
   }
   
-  html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="tags-container" id="tags-container"></div></div>`;
+  if (!schema.hideRelationships) {
+    if (editMode) {
+      html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="aliases-list" id="aliases-list"></div></div>`;
+    } else if (item.aliases && item.aliases.length > 0) {
+      html += `<div class="field-group"><div class="field-group-title">Aliases</div><div class="field-value-readonly">${item.aliases.map(a => escHtml(a)).join(', ')}</div></div>`;
+    }
+  }
   
-  if (editMode) {
-    html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><textarea class="field-value" id="field-notes" placeholder="Additional notes…" onchange="saveField('notes')">${escHtml(item.notes || '')}</textarea>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
-  } else if (item.notes) {
-    html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><div class="field-value-readonly" style="white-space: pre-wrap;">${escHtml(item.notes)}</div>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
+  // Tags section (unless hidden by schema)
+  if (!schema.hideTags) {
+    html += `<div class="field-group"><div class="field-group-title">Tags</div><div class="tags-container" id="tags-container"></div></div>`;
+  }
+  
+  // Notes section (unless hidden by schema)
+  if (!schema.hideNotes) {
+    if (editMode) {
+      html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><textarea class="field-value" id="field-notes" placeholder="Additional notes…" onchange="saveField('notes')">${escHtml(item.notes || '')}</textarea>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
+    } else if (item.notes) {
+      html += `<div class="field-group"><div class="field-group-title">Notes</div><div class="field-row"><div class="field-label">Notes</div><div class="field-with-timestamp"><div class="field-value-readonly" style="white-space: pre-wrap;">${escHtml(item.notes)}</div>${notesTsDisplay ? `<span class="field-timestamp">Updated ${notesTsDisplay}</span>` : ''}</div></div></div>`;
+    }
   }
   
   // Quick Strings for billing codes
@@ -4254,9 +4267,9 @@ function renderDetail() {
   html += `</div>`;
   
   detail.innerHTML = html;
-  if (editMode) renderAliases();
-  renderTags();
-  renderRelationships();
+  if (editMode && !schema.hideRelationships) renderAliases();
+  if (!schema.hideTags) renderTags();
+  if (!schema.hideRelationships) renderRelationships();
 }
 
 function updateDetailHeader() {
@@ -4647,6 +4660,8 @@ function getObjectCodeDesc(code) {
 
 function renderQuickStrings(item) {
   const quickStrings = item.quick_strings || [];
+  
+  // In view mode with no quick strings, show nothing
   if (quickStrings.length === 0 && !editMode) {
     return '';
   }
@@ -4668,7 +4683,11 @@ function renderQuickStrings(item) {
   });
   
   if (editMode) {
-    html += '<button class="add-quick-string-btn" onclick="openObjectPicker()">+ Add String</button>';
+    if (objectCodes.length === 0) {
+      html += '<div style="font-size: 12px; color: var(--ink-faint); padding: 8px 0;">Add object codes via the toolbar button first</div>';
+    } else {
+      html += '<button class="add-quick-string-btn" onclick="openObjectPicker()">+ Add String</button>';
+    }
   }
   
   html += '</div>';
